@@ -65,6 +65,10 @@
     .images-box.count-more { grid-template-columns: repeat(2, 1fr); }
     .lesson-img { width: 100%; height: 200px; object-fit: cover; border-radius: 6px; cursor: pointer; background: #000; }
     .img-item-wrap { position: relative; background: #000; border-radius: 6px; overflow: hidden; }
+    
+    /* تنسيق رقم الترتيب أسفل زاوية الصورة */
+    .img-number-badge { position: absolute; bottom: 42px; left: 8px; background: rgba(13, 148, 136, 0.9); color: white; font-size: 14px; font-weight: bold; padding: 2px 8px; border-radius: 6px; backdrop-filter: blur(4px); box-shadow: 0 2px 6px rgba(0,0,0,0.3); pointer-events: none; z-index: 2; }
+
     .btn-action { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; border: none; cursor: pointer; }
     .preview-grid { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0; margin-bottom: 10px; }
     .preview-wrap { position: relative; flex-shrink: 0; }
@@ -208,7 +212,6 @@
   </div>
 
 <script>
-  // محاكي الجسر البرمجي (Web Polyfill) ليعمل الكود على الآيفون والكمبيوتر بدون تغيير
   const Android = {
     pickImages: function() {
       let input = document.getElementById('webFileInput');
@@ -230,7 +233,6 @@
         URL.revokeObjectURL(blobUrl);
         this.showToast('تم بدء تنزيل الصورة ✅');
       } catch (e) {
-        // في حال منع المتصفح، تفتح الصورة في نافذة جديدة لحفظها مطولاً على الآيفون
         window.open(imgUrl, '_blank');
       }
     },
@@ -302,6 +304,12 @@
   let lastPinchMidX = 0;
   let lastPinchMidY = 0;
   let lastTapTime = 0;
+
+  // تحويل الأرقام إلى رموز سفلية أو علوية دقيقة للترقيم
+  function getSuperscriptNumber(num) {
+    const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+    return String(num).split('').map(digit => superscripts[digit] || digit).join('');
+  }
 
   function loadLocalCache() {
     let cached = localStorage.getItem('app_cache_v23');
@@ -567,7 +575,8 @@
             ${item.images ? item.images.map((img, idx) => `
               <div class='img-item-wrap'>
                 <img class='lesson-img' src='${img}' onclick='openLightbox("${img}")'>
-                <button class='btn-action' style='width:100%; margin-top:2px; background:#334155; color:white; border-radius:0;' onclick='Android.downloadImage("${img}", "Item_${item.subject}_${item.id}_${idx}")'>⬇ تحميل الصورة</button>
+                <div class='img-number-badge'>${getSuperscriptNumber(idx + 1)}</div>
+                <button class='btn-action' style='width:100%; margin-top:2px; background:#334155; color:white; border-radius:0;' onclick='Android.downloadImage("${img}", "Item_${item.subject}_${item.id}_${idx + 1}")'>⬇ تحميل الصورة</button>
               </div>
             `).join('') : ''}
           </div>
