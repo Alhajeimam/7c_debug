@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html dir='rtl' lang='ar'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'>
+  <title>مدارس المراد كرفور (7C)</title>
+
+  <!-- إعدادات تحويل الموقع إلى تطبيق آيفون وأندرويد (PWA) بملء الشاشة -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="المراد 7C">
+  <link rel="apple-touch-icon" href="https://i.ibb.co/h1HCYQ7h/5d8fc3ef6413.jpg">
+  <link rel="icon" type="image/jpeg" href="https://i.ibb.co/h1HCYQ7h/5d8fc3ef6413.jpg">
+  <meta name="theme-color" content="#0D9488">
+
+  <style>
+    :root { --primary: #0D9488; --primary-dark: #0F766E; --bg: #F0FDFA; --card: #FFFFFF; --text: #134E4A; --accent: #14B8A6; --danger: #EF4444; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 105px; padding-top: env(safe-area-inset-top); }
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: center; gap: 12px; border-bottom-left-radius: 22px; border-bottom-right-radius: 22px; box-shadow: 0 4px 12px rgba(13,148,136,0.25); position: sticky; top: 0; z-index: 50; }
+    .school-logo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid white; background: #000; flex-shrink: 0; }
+    .header-text h1 { font-size: 17px; margin-bottom: 2px; }
+    .header-text p { font-size: 11px; opacity: 0.9; }
+    .developer-footer { text-align: center; padding: 14px; font-size: 11px; color: #64748B; background: #CCFBF1; margin-top: 20px; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+    .developer-footer span { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: underline; }
+    .warning-bar { background: #CCFBF1; color: #134E4A; border-right: 4px solid var(--primary); padding: 10px 14px; font-size: 12px; font-weight: bold; margin: 12px 16px 0 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .container { padding: 16px; max-width: 700px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .subject-card { background: var(--card); border-radius: 16px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-top: 4px solid var(--primary); cursor: pointer; position: relative; }
+    .badge-count { position: absolute; top: 10px; left: 10px; background: var(--danger); color: white; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 10px; display: none; }
+    .badge { display: inline-block; background: #F0FDFA; color: var(--primary); font-weight: bold; font-size: 15px; padding: 6px 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #99F6E4; }
+    .subject-title { font-size: 13px; font-weight: bold; color: #134E4A; }
+    .subject-count { font-size: 11px; color: #64748B; margin-top: 4px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)) 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); border-top-left-radius: 18px; border-top-right-radius: 18px; z-index: 100; }
+    .nav-item { text-align: center; color: #94A3B8; font-size: 12px; font-weight: bold; flex: 1; padding: 6px; cursor: pointer; }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+    .table-wrap { overflow-x: auto; background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; }
+    th { background: var(--primary); color: white; padding: 10px 6px; font-weight: bold; border: 1px solid #99F6E4; }
+    td { padding: 8px 4px; border: 1px solid #E2E8F0; font-weight: bold; color: #134E4A; }
+    .time-col { background: #F0FDFA; color: var(--primary); font-size: 11px; white-space: nowrap; }
+    .cell-view { padding: 6px; font-size: 11px; color: #0F766E; background: #F8FAFC; border-radius: 6px; display: inline-block; min-width: 40px; }
+    .cell-input { width: 100%; border: 1px solid #CBD5E1; background: #FFF; text-align: center; font-weight: bold; font-size: 11px; color: var(--primary); padding: 6px; border-radius: 6px; }
+    .toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .toolbar-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+    select, input, textarea, button { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #CBD5E1; font-size: 13px; outline: none; }
+    .sort-select { width: auto; font-size: 12px; font-weight: bold; color: var(--primary); background: #F0FDFA; border-color: var(--primary); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+    .btn-primary:disabled { background: #94A3B8; cursor: not-allowed; opacity: 0.7; }
+    .btn-back { background: #E2E8F0; color: #334155; border: none; padding: 6px 12px; border-radius: 8px; width: auto; font-weight: bold; font-size: 12px; cursor: pointer; }
+    .lesson-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 3px 10px rgba(0,0,0,0.07); border: 2px solid transparent; }
+    .lesson-card.unread { border-color: var(--danger); background: #FFF5F5; }
+    .lesson-header-info { padding: 14px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; }
+    .lesson-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .lesson-title-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .subject-badge-tag { background: var(--primary); color: white; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    .lesson-title-text { font-weight: bold; font-size: 14px; color: #0F172A; }
+    .lesson-meta-box { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .meta-tag { background: #F0FDFA; color: var(--primary); border: 1px solid #99F6E4; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+    .lesson-desc { padding: 12px 14px; font-size: 13px; color: #334155; background: #FFF; border-bottom: 1px solid #F1F5F9; line-height: 1.5; }
+    .images-box { background: #1E293B; padding: 8px; display: grid; gap: 6px; }
+    .images-box.count-1 { grid-template-columns: 1fr; }
+    .images-box.count-2 { grid-template-columns: repeat(2, 1fr); }
+    .images-box.count-more { grid-template-columns: repeat(2, 1fr); }
+    .lesson-img { width: 100%; height: 200px; object-fit: cover; border-radius: 6px; cursor: pointer; background: #000; }
+    .img-item-wrap { position: relative; background: #000; border-radius: 6px; overflow: hidden; }
+    .btn-action { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; border: none; cursor: pointer; }
+    .preview-grid { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0; margin-bottom: 10px; }
+    .preview-wrap { position: relative; flex-shrink: 0; }
+    .preview-thumb { width: 75px; height: 75px; object-fit: cover; border-radius: 6px; border: 1px solid var(--primary); }
+    .remove-thumb { position: absolute; top: -5px; left: -5px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; }
+    .form-box { background: white; padding: 16px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s ease-in-out infinite; margin-left: 6px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #lightbox { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.96); z-index: 1000; display: none; overflow: hidden; touch-action: none; direction: ltr; }
+    #lightbox-content { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; touch-action: none; position: relative; }
+    #lightboxImg { max-width: 100vw; max-height: 100vh; width: auto; height: auto; object-fit: contain; transform-origin: center center; will-change: transform; user-select: none; -webkit-user-drag: none; touch-action: none; }
+    #lightbox-close { position: fixed; top: calc(20px + env(safe-area-inset-top)); left: 20px; background: white; color: black; font-weight: bold; border: none; border-radius: 50%; width: 42px; height: 42px; font-size: 20px; cursor: pointer; z-index: 1010; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .zoom-controls { position: fixed; bottom: calc(30px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 1010; background: rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 30px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); direction: rtl; }
+    .zoom-btn { background: white; color: black; border: none; width: 40px; height: 40px; border-radius: 50%; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .hidden { display: none; }
+
+    /* إشعارات الويب العائمة (بديل Toast في أندرويد) */
+    #web-toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: rgba(19, 78, 74, 0.95); color: white; padding: 10px 20px; border-radius: 25px; font-size: 13px; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; max-width: 90%; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <!-- مدخل اختيار الصور المخفي الخاص بالمتصفح والآيفون -->
+  <input type="file" id="webFileInput" multiple accept="image/*" style="display:none" onchange="handleWebFiles(this.files)">
+  <!-- عنصر الإشعارات العائمة -->
+  <div id="web-toast"></div>
+
+  <header>
+    <img class='school-logo' src='https://i.ibb.co/h1HCYQ7h/5d8fc3ef6413.jpg' alt='شعار المدرسة'>
+    <div class='header-text'>
+      <h1 id='headerTitle'>مدارس المراد كرفور (7C)</h1>
+      <p>العام الدراسي 2026 - 2027</p>
+    </div>
+  </header>
+  <div id='globalWarning' class='warning-bar'>
+    <span id='warningText'>جاري التحميل...</span>
+  </div>
+  <div id='viewSubjects' class='container'>
+    <div class='grid' id='subjectsGrid'></div>
+  </div>
+  <div id='viewLessons' class='container hidden'>
+    <div class='toolbar'>
+      <div class='toolbar-row'>
+        <button class='btn-back' onclick='showTab("subjects")'>⬅ القائمة الرئيسية</button>
+        <select id='sortOrder' class='sort-select' onchange='renderLessons()'>
+          <option value='newest'>الأحدث أولاً ⬇</option>
+          <option value='oldest'>الأقدم أولاً ⬆</option>
+        </select>
+      </div>
+      <div id='exerciseSubjectFilterRow' class='toolbar-row hidden'>
+        <select id='exerciseFilterSubject' onchange='renderLessons()' style='font-size:12px; font-weight:bold; color:var(--primary); background:#F0FDFA;'>
+          <option value='ALL'>📂 عرض تمارين كل المواد</option>
+        </select>
+      </div>
+      <div class='toolbar-row'>
+        <input type='text' id='searchBox' placeholder='بحث بالعنوان...' oninput='renderLessons()' style='margin-bottom:0;'>
+      </div>
+      <div class='toolbar-row'>
+        <input type='date' id='filterDate' onchange='renderLessons()' style='margin-bottom:0; font-size:12px;'>
+        <button class='btn-back' onclick='clearFilter()' style='background:#FEE2E2; color:#DC2626;'>إلغاء التصفية</button>
+      </div>
+    </div>
+    <div id='lessonsList'></div>
+  </div>
+  <div id='viewSchedule' class='container hidden'>
+    <div class='table-wrap'>
+      <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;'>
+        <h3 style='font-size:14px; color:var(--primary);'>التوزيع الزمني للقسم</h3>
+        <div id='scheduleAdminControls' class='hidden' style='display:flex; gap:6px;'>
+          <button id='editSchedBtn' class='btn-action' style='background:var(--primary); color:white;' onclick='toggleScheduleEdit()'>تعديل الجدول ✏️</button>
+          <button id='saveSchedBtn' class='btn-action hidden' style='background:#10B981; color:white;' onclick='saveScheduleToCloud(this)'>حفظ التعديلات 💾</button>
+        </div>
+      </div>
+      <table id='scheduleTable'>
+        <thead>
+          <tr><th>التوقيت</th><th>السبت</th><th>الأحد</th><th>الاثنين</th><th>الثلاثاء</th><th>الأربعاء</th><th>الخميس</th><th>الجمعة</th></tr>
+        </thead>
+        <tbody id='scheduleBody'></tbody>
+      </table>
+    </div>
+  </div>
+  <div id='viewAdmin' class='container hidden'>
+    <div id='loginBox' class='form-box'>
+      <h3 style='margin-bottom:14px; text-align:center;'>تسجيل دخول المشرف 🔒</h3>
+      <input type='text' id='adminUser' placeholder='اسم المستخدم' style='margin-bottom:10px;'>
+      <input type='password' id='adminPass' placeholder='كلمة المرور' style='margin-bottom:10px;'>
+      <button class='btn-primary' onclick='loginAdmin()'>دخول لوحة التحكم</button>
+    </div>
+    <div id='adminDashboard' class='hidden'>
+      <div class='form-box' style='border-top: 4px solid var(--primary); margin-bottom: 16px;'>
+        <h3 style='margin-bottom:10px; color:var(--primary); font-size:15px;'>⚠️ إدارة التحذير العام</h3>
+        <input type='text' id='pubWarningInput' placeholder='اكتب نص التحذير الجديد هنا...' style='margin-bottom:10px;'>
+        <button id='btnUpdateWarning' class='btn-primary' onclick='updateWarning(this)'>تحديث التحذير العام 🔔</button>
+      </div>
+      <div class='form-box'>
+        <h3 id='formModeTitle' style='margin-bottom:14px; color:var(--primary);'>نشر محتوى جديد 📤</h3>
+        <input type='hidden' id='editLessonId' value=''>
+        <label style='font-size:12px; font-weight:bold;'>نوع النشر:</label>
+        <select id='pubCategory' style='margin-bottom:10px;'>
+          <option value='lesson'>درس لمادة معينة</option>
+          <option value='exercise'>تمارين عامة</option>
+        </select>
+        <label style='font-size:12px; font-weight:bold;'>اختر المادة:</label>
+        <select id='pubSubject' style='margin-bottom:10px;'></select>
+        <label style='font-size:12px; font-weight:bold;'>وقت الحصة:</label>
+        <select id='pubTimeSlot' style='margin-bottom:10px;'>
+          <option value='غير محدد'>بدون تحديد وقت الحصة</option>
+          <option value='08H-10H'>08H - 10H</option>
+          <option value='10H-12H'>10H - 12H</option>
+          <option value='12H-14H'>12H - 14H</option>
+          <option value='16H-18H'>16H - 18H</option>
+        </select>
+        <input type='text' id='pubTitle' placeholder='عنوان الدرس أو التمرين (اختياري)' style='margin-bottom:10px;'>
+        <textarea id='pubDesc' placeholder='وصف أو ملاحظات (اختياري)' rows='2' style='margin-bottom:10px;'></textarea>
+        <label style='font-size:12px; font-weight:bold;'>صور المحتوى:</label>
+        <div id='previewContainer' class='preview-grid'></div>
+        <button style='background:#F0FDFA; color:var(--primary); font-weight:bold; border:1px dashed var(--primary); margin-bottom:10px;' onclick='Android.pickImages()'>📷 اختيار صور</button>
+        <button id='btnSaveLesson' class='btn-primary' onclick='uploadAndSaveLesson(this)'>حفظ ونشر المحتوى سحابياً ✅</button>
+        <button id='cancelEditBtn' class='hidden' style='background:#E2E8F0; color:#334155; border:none; margin-top:6px;' onclick='resetPublishForm()'>إلغاء التعديل</button>
+        <button style='background:#FEE2E2; color:#DC2626; border:none; margin-top:16px;' onclick='logoutAdmin()'>تسجيل الخروج من المشرف</button>
+      </div>
+    </div>
+  </div>
+  <div class='developer-footer'>
+    تطوير: الحاج احمدو القاظي | <span onclick='Android.openWhatsApp()'>تواصل مع المطور 💬</span>
+  </div>
+  <div id='lightbox'>
+    <button id='lightbox-close' onclick='closeLightbox()'>✕</button>
+    <div id='lightbox-content'>
+      <img id='lightboxImg' src=''>
+    </div>
+    <div class='zoom-controls'>
+      <button class='zoom-btn' onclick='zoomButton(1.4)'>+</button>
+      <button class='zoom-btn' onclick='zoomButton(0.7)'>-</button>
+      <button class='zoom-btn' onclick='resetZoom()' style='font-size:12px; width:auto; padding:0 12px; border-radius:20px;'>إعادة</button>
+    </div>
+  </div>
+  <div class='bottom-nav'>
+    <div class='nav-item active' id='navSubjects' onclick='showTab("subjects")'><span class='nav-icon'>📚</span>الرئيسية</div>
+    <div class='nav-item' id='navSchedule' onclick='showTab("schedule")'><span class='nav-icon'>📅</span>الجدول</div>
+    <div class='nav-item' id='navAdmin' onclick='showTab("admin")'><span class='nav-icon'>⚙️</span>المشرف</div>
+  </div>
+
+<script>
+  // محاكي الجسر البرمجي (Web Polyfill) ليعمل الكود على الآيفون والكمبيوتر بدون تغيير
+  const Android = {
+    pickImages: function() {
+      let input = document.getElementById('webFileInput');
+      input.value = '';
+      input.click();
+    },
+    downloadImage: async function(imgUrl, fileName) {
+      this.showToast('جاري تجهيز الصورة للتنزيل... ⏳');
+      try {
+        const response = await fetch(imgUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName + '_' + Date.now() + '.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        this.showToast('تم بدء تنزيل الصورة ✅');
+      } catch (e) {
+        // في حال منع المتصفح، تفتح الصورة في نافذة جديدة لحفظها مطولاً على الآيفون
+        window.open(imgUrl, '_blank');
+      }
+    },
+    openWhatsApp: function() {
+      const url = "https://api.whatsapp.com/send?phone=22244105798&text=" + encodeURIComponent("مرحباً المطور الحاج احمدو القاظي، لدي استفسار بخصوص تطبيق المدرسة");
+      window.open(url, '_blank');
+    },
+    showToast: function(msg) {
+      const toast = document.getElementById('web-toast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+  };
+
+  function handleWebFiles(files) {
+    if (!files || files.length === 0) return;
+    let base64Array = [];
+    let loaded = 0;
+    for (let i = 0; i < files.length; i++) {
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        base64Array.push(e.target.result);
+        loaded++;
+        if (loaded === files.length) {
+          onImagesPicked(base64Array);
+        }
+      };
+      reader.readAsDataURL(files[i]);
+    }
+  }
+
+  const FIREBASE_URL = 'https://aravat-5a-default-rtdb.firebaseio.com/';
+  const IMGBB_KEY = '5807f7e8c7d21b6e771afc843be8577d';
+  const SUBJECTS = [
+    { code: 'M3', name: 'الرياضيات (M3)', color: '#0D9488' },
+    { code: 'M4', name: 'الرياضيات (M4)', color: '#0F766E' },
+    { code: 'PC2', name: 'الفيزياء والكيمياء (PC2)', color: '#14B8A6' },
+    { code: 'PC3', name: 'الفيزياء والكيمياء (PC3)', color: '#2DD4BF' },
+    { code: 'SN7', name: 'العلوم الطبيعية (SN7)', color: '#047857' },
+    { code: 'AR3', name: 'اللغة العربية (AR3)', color: '#B45309' },
+    { code: 'FR', name: 'اللغة الفرنسية (FR)', color: '#BE185D' },
+    { code: 'ANG1', name: 'اللغة الإنجليزية (ANG1)', color: '#7C3AED' },
+    { code: 'IR2', name: 'التربية الإسلامية (IR2)', color: '#059669' }
+  ];
+  const DEFAULT_SCHEDULE = [
+    { time: '08H-10H', days: ['M3', 'PC2', '-', 'FR', 'M4', 'AR3', '-'] },
+    { time: '10H-12H', days: ['-', 'PC3', 'M4', 'IR2', '-', 'PC2', '-'] },
+    { time: '12H-14H', days: ['PC3', 'M3', '-', 'SN7', 'SN7', 'ANG1', '-'] },
+    { time: '16H-18H', days: ['-', '-', 'PC3', '-', '-', '-', '-'] }
+  ];
+  let globalData = { lessons: {}, warning: '⚠️ تنبيه هام: يرجى متابعة الدروس والتمارين أولاً بأول.', schedule: DEFAULT_SCHEDULE };
+  let currentViewMode = null;
+  let currentSubjectCode = null;
+  let pickedImages = [];
+  let isAdminLoggedIn = localStorage.getItem('admin_logged_in') === 'true';
+  let isScheduleEditable = false;
+
+  let currentZoom = 1;
+  let panX = 0;
+  let panY = 0;
+  let isDragging = false;
+  let startTouchX = 0;
+  let startTouchY = 0;
+  let initialPinchDist = null;
+  let lastPinchMidX = 0;
+  let lastPinchMidY = 0;
+  let lastTapTime = 0;
+
+  function loadLocalCache() {
+    let cached = localStorage.getItem('app_cache_v23');
+    if (cached) {
+      try { globalData = JSON.parse(cached); } catch(e){}
+    }
+    updateUIEverything();
+  }
+  function fetchCloudDataSilent() {
+    let timeoutReached = false;
+    let timer = setTimeout(() => {
+      if (!timeoutReached) {
+        timeoutReached = true;
+        updateUIEverything();
+      }
+    }, 2000);
+    fetch(FIREBASE_URL + '.json')
+      .then(res => res.json())
+      .then(data => {
+        if (!timeoutReached) {
+          clearTimeout(timer);
+          timeoutReached = true;
+          if (data) {
+            let hasChanged = JSON.stringify(data) !== JSON.stringify(globalData);
+            globalData = data;
+            if(!globalData.lessons) globalData.lessons = {};
+            if(!globalData.schedule) globalData.schedule = DEFAULT_SCHEDULE;
+            localStorage.setItem('app_cache_v23', JSON.stringify(globalData));
+            if (hasChanged) { updateUIEverything(); }
+          } else {
+            updateUIEverything();
+          }
+        }
+      })
+      .catch(err => {
+        if (!timeoutReached) {
+          clearTimeout(timer);
+          timeoutReached = true;
+          updateUIEverything();
+        }
+      });
+  }
+  function updateUIEverything() {
+    let warnEl = document.getElementById('warningText');
+    if(warnEl) { warnEl.innerText = globalData.warning || '⚠️ تنبيه هام.'; }
+    let warnInput = document.getElementById('pubWarningInput');
+    if(warnInput && document.activeElement !== warnInput) {
+      warnInput.value = globalData.warning || '';
+    }
+    renderSubjects();
+    renderScheduleTable();
+    let viewLessons = document.getElementById('viewLessons');
+    if(viewLessons && !viewLessons.classList.contains('hidden')) {
+      renderLessons();
+    }
+  }
+  function initApp() {
+    loadLocalCache();
+    let select = document.getElementById('pubSubject');
+    if(select) {
+      select.innerHTML = SUBJECTS.map(s => `<option value='${s.code}'>${s.code} - ${s.name}</option>`).join('');
+    }
+    let filterSelect = document.getElementById('exerciseFilterSubject');
+    if(filterSelect) {
+      filterSelect.innerHTML = `<option value='ALL'>📂 عرض تمارين كل المواد</option>` + SUBJECTS.map(s => `<option value='${s.code}'>${s.code}</option>`).join('');
+    }
+    if (isAdminLoggedIn) {
+      let loginBox = document.getElementById('loginBox');
+      let adminDash = document.getElementById('adminDashboard');
+      let schedCtrl = document.getElementById('scheduleAdminControls');
+      if(loginBox) loginBox.classList.add('hidden');
+      if(adminDash) adminDash.classList.remove('hidden');
+      if(schedCtrl) schedCtrl.classList.remove('hidden');
+    } else {
+      let schedCtrl = document.getElementById('scheduleAdminControls');
+      if(schedCtrl) schedCtrl.classList.add('hidden');
+    }
+    fetchCloudDataSilent();
+    setInterval(fetchCloudDataSilent, 5000);
+    setupSmoothPanZoom();
+  }
+  function getLessonsArray() {
+    if (!globalData.lessons) return [];
+    return Object.keys(globalData.lessons).map(key => {
+      let item = globalData.lessons[key];
+      item.id = key;
+      return item;
+    });
+  }
+  function renderSubjects() {
+    let list = getLessonsArray();
+    let grid = document.getElementById('subjectsGrid');
+    if(!grid) return;
+    let exUnread = list.filter(item => item.isExercise && !item.read).length;
+    let exCount = list.filter(item => item.isExercise).length;
+    let html = `
+      <div class='subject-card' style='border-top-color:#0D9488;' onclick='openExercises()'>
+        <div class='badge-count' style='display:${exUnread > 0 ? "block" : "none"}'>${exUnread}</div>
+        <div class='badge' style='color:#0D9488; background:#F0FDFA;'>📝</div>
+        <div class='subject-title'>التمارين الشاملة</div>
+        <div class='subject-count'>${exCount} عنصر مضاف</div>
+      </div>
+    `;
+    html += SUBJECTS.map(s => {
+      let unreadCount = list.filter(item => !item.isExercise && item.subject === s.code && !item.read).length;
+      let count = list.filter(item => !item.isExercise && item.subject === s.code).length;
+      return `<div class='subject-card' style='border-top-color:${s.color}' onclick='openSubject("${s.code}")'>
+        <div class='badge-count' style='display:${unreadCount > 0 ? "block" : "none"}'>${unreadCount}</div>
+        <div class='badge' style='color:${s.color}; background:${s.color}15'>${s.code}</div>
+        <div class='subject-title'>${s.code}</div>
+        <div class='subject-count'>${count} دروس مضافة</div>
+      </div>`;
+    }).join('');
+    grid.innerHTML = html;
+  }
+  function renderScheduleTable() {
+    let sched = globalData.schedule || DEFAULT_SCHEDULE;
+    let tbody = document.getElementById('scheduleBody');
+    if(!tbody) return;
+    let ctrlDiv = document.getElementById('scheduleAdminControls');
+    if (ctrlDiv) {
+      if (isAdminLoggedIn) { ctrlDiv.classList.remove('hidden'); }
+      else { ctrlDiv.classList.add('hidden'); isScheduleEditable = false; }
+    }
+    tbody.innerHTML = sched.map((row, rIdx) => `
+      <tr>
+        <td class='time-col'>${row.time}</td>
+        ${row.days.map((val, dIdx) => `
+          <td>
+            ${isAdminLoggedIn && isScheduleEditable ? 
+              `<input class='cell-input' id='sched_${rIdx}_${dIdx}' value='${val}'>` :
+              `<span class='cell-view'>${val}</span>`}
+          </td>
+        `).join('')}
+      </tr>
+    `).join('');
+  }
+  function toggleScheduleEdit() {
+    if (!isAdminLoggedIn) return;
+    isScheduleEditable = !isScheduleEditable;
+    document.getElementById('editSchedBtn').classList.toggle('hidden', isScheduleEditable);
+    document.getElementById('saveSchedBtn').classList.toggle('hidden', !isScheduleEditable);
+    renderScheduleTable();
+  }
+  function saveScheduleToCloud(btn) {
+    if (!isAdminLoggedIn) return;
+    btn.disabled = true;
+    let originalText = btn.innerHTML;
+    btn.innerHTML = 'جاري الحفظ... <span class="spinner"></span>';
+    let sched = globalData.schedule || DEFAULT_SCHEDULE;
+    for(let r=0; r<sched.length; r++) {
+      for(let d=0; d<7; d++) {
+        let input = document.getElementById('sched_' + r + '_' + d);
+        if(input) { sched[r].days[d] = input.value.trim() || '-'; }
+      }
+    }
+    fetch(FIREBASE_URL + 'schedule.json', {
+      method: 'PUT',
+      body: JSON.stringify(sched)
+    }).then(() => {
+      globalData.schedule = sched;
+      localStorage.setItem('app_cache_v23', JSON.stringify(globalData));
+      isScheduleEditable = false;
+      document.getElementById('editSchedBtn').classList.remove('hidden');
+      document.getElementById('saveSchedBtn').classList.add('hidden');
+      renderScheduleTable();
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('تم حفظ الجدول في السحاب ✅');
+    }).catch(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('فشل حفظ الجدول');
+    });
+  }
+  function openSubject(code) {
+    currentViewMode = 'subject';
+    currentSubjectCode = code;
+    document.getElementById('headerTitle').innerText = code;
+    document.getElementById('viewSubjects').classList.add('hidden');
+    document.getElementById('viewLessons').classList.remove('hidden');
+    document.getElementById('exerciseSubjectFilterRow').classList.add('hidden');
+    let list = getLessonsArray();
+    list.forEach(item => {
+      if(!item.isExercise && item.subject === code && !item.read) {
+        fetch(FIREBASE_URL + 'lessons/' + item.id + '/read.json', { method: 'PUT', body: 'true' });
+        item.read = true;
+      }
+    });
+    localStorage.setItem('app_cache_v23', JSON.stringify(globalData));
+    renderSubjects();
+    renderLessons();
+  }
+  function openExercises() {
+    currentViewMode = 'exercises';
+    currentSubjectCode = null;
+    document.getElementById('headerTitle').innerText = 'التمارين الشاملة';
+    document.getElementById('viewSubjects').classList.add('hidden');
+    document.getElementById('viewLessons').classList.remove('hidden');
+    document.getElementById('exerciseSubjectFilterRow').classList.remove('hidden');
+    document.getElementById('exerciseFilterSubject').value = 'ALL';
+    let list = getLessonsArray();
+    list.forEach(item => {
+      if(item.isExercise && !item.read) {
+        fetch(FIREBASE_URL + 'lessons/' + item.id + '/read.json', { method: 'PUT', body: 'true' });
+        item.read = true;
+      }
+    });
+    localStorage.setItem('app_cache_v23', JSON.stringify(globalData));
+    renderSubjects();
+    renderLessons();
+  }
+  function renderLessons() {
+    let list = getLessonsArray();
+    let searchBox = document.getElementById('searchBox');
+    let filterDate = document.getElementById('filterDate');
+    let sortOrder = document.getElementById('sortOrder');
+    let exSubFilter = document.getElementById('exerciseFilterSubject');
+    let searchQuery = searchBox ? searchBox.value.toLowerCase() : '';
+    let filterDateVal = filterDate ? filterDate.value : '';
+    let sortVal = sortOrder ? sortOrder.value : 'newest';
+    let subFilterVal = exSubFilter ? exSubFilter.value : 'ALL';
+    let filtered = list.filter(item => {
+      if (currentViewMode === 'subject') {
+        if (item.isExercise || item.subject !== currentSubjectCode) return false;
+      } else {
+        if (!item.isExercise) return false;
+        if (subFilterVal !== 'ALL' && item.subject !== subFilterVal) return false;
+      }
+      if (searchQuery && !(item.title && item.title.toLowerCase().includes(searchQuery)) && !(item.desc && item.desc.toLowerCase().includes(searchQuery))) return false;
+      if (filterDateVal && item.dateKey !== filterDateVal) return false;
+      return true;
+    });
+    filtered.sort((a, b) => sortVal === 'newest' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
+    let container = document.getElementById('lessonsList');
+    if(!container) return;
+    if (filtered.length === 0) {
+      container.innerHTML = `<div style='text-align:center; padding:40px; color:#64748B;'>لا توجد عناصر مطابقة 📭</div>`;
+      return;
+    }
+    container.innerHTML = filtered.map(item => {
+      let imgCount = item.images ? item.images.length : 0;
+      let countClass = imgCount === 1 ? 'count-1' : (imgCount === 2 ? 'count-2' : 'count-more');
+      let mainTag = item.isExercise ? 'تمرين (' + item.subject + ')' : item.subject;
+      let customTitle = item.title ? `<span style='font-weight:normal; color:#475569; font-size:13px; margin-right:6px;'>- ${item.title}</span>` : '';
+      return `
+        <div class='lesson-card ${!item.read ? "unread" : ""}'>
+          <div class='lesson-header-info'>
+            <div class='lesson-top-row'>
+              <div class='lesson-title-box'>
+                <span class='subject-badge-tag'>${mainTag}</span>
+                <span class='lesson-title-text'>${customTitle}</span>
+              </div>
+              ${isAdminLoggedIn ? `<div style='display:flex; gap:4px;'><button class='btn-action' style='background:#F0FDFA; color:var(--primary); border:1px solid #99F6E4;' onclick='editLesson("${item.id}")'>✏️ تعديل</button><button class='btn-action' style='background:#FEE2E2; color:#DC2626;' onclick='deleteLesson("${item.id}")'>🗑️ حذف</button></div>` : ''}
+            </div>
+            <div class='lesson-meta-box'>
+              <span class='meta-tag'>📅 ${item.dateStr}</span>
+              ${item.timeSlot && item.timeSlot !== 'غير محدد' ? `<span class='meta-tag'>🕒 الحصة: ${item.timeSlot}</span>` : ''}
+            </div>
+          </div>
+          ${item.desc ? `<div class='lesson-desc'>${item.desc}</div>` : ''}
+          <div class='images-box ${countClass}'>
+            ${item.images ? item.images.map((img, idx) => `
+              <div class='img-item-wrap'>
+                <img class='lesson-img' src='${img}' onclick='openLightbox("${img}")'>
+                <button class='btn-action' style='width:100%; margin-top:2px; background:#334155; color:white; border-radius:0;' onclick='Android.downloadImage("${img}", "Item_${item.subject}_${item.id}_${idx}")'>⬇ تحميل الصورة</button>
+              </div>
+            `).join('') : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  function clearFilter() {
+    let sb = document.getElementById('searchBox');
+    let fd = document.getElementById('filterDate');
+    let efs = document.getElementById('exerciseFilterSubject');
+    if(sb) sb.value = '';
+    if(fd) fd.value = '';
+    if(efs) efs.value = 'ALL';
+    renderLessons();
+  }
+  function showTab(tab) {
+    ['viewSubjects', 'viewLessons', 'viewSchedule', 'viewAdmin'].forEach(id => {
+      let el = document.getElementById(id);
+      if(el) el.classList.add('hidden');
+    });
+    ['navSubjects', 'navSchedule', 'navAdmin'].forEach(id => {
+      let el = document.getElementById(id);
+      if(el) el.classList.remove('active');
+    });
+    if (tab === 'subjects') {
+      document.getElementById('headerTitle').innerText = 'مدارس المراد كرفور (7C)';
+      document.getElementById('viewSubjects').classList.remove('hidden');
+      document.getElementById('navSubjects').classList.add('active');
+      renderSubjects();
+    } else if (tab === 'schedule') {
+      document.getElementById('headerTitle').innerText = 'التوزيع الزمني';
+      document.getElementById('viewSchedule').classList.remove('hidden');
+      document.getElementById('navSchedule').classList.add('active');
+      renderScheduleTable();
+    } else if (tab === 'admin') {
+      document.getElementById('headerTitle').innerText = 'لوحة المشرف';
+      document.getElementById('viewAdmin').classList.remove('hidden');
+      document.getElementById('navAdmin').classList.add('active');
+    }
+  }
+  function loginAdmin() {
+    let u = document.getElementById('adminUser').value.trim();
+    let p = document.getElementById('adminPass').value.trim();
+    fetch(FIREBASE_URL + 'admin.json')
+      .then(res => res.json())
+      .then(adminData => {
+        let correctUser = adminData ? adminData.username : 'admin7c';
+        let correctPass = adminData ? adminData.password : '20262027';
+        if (u === correctUser && p === correctPass) {
+          isAdminLoggedIn = true;
+          localStorage.setItem('admin_logged_in', 'true');
+          let loginBox = document.getElementById('loginBox');
+          let adminDash = document.getElementById('adminDashboard');
+          let schedCtrl = document.getElementById('scheduleAdminControls');
+          if(loginBox) loginBox.classList.add('hidden');
+          if(adminDash) adminDash.classList.remove('hidden');
+          if(schedCtrl) schedCtrl.classList.remove('hidden');
+          Android.showToast('مرحباً بك في لوحة تحكم المشرف');
+          renderScheduleTable();
+        } else {
+          Android.showToast('بيانات الدخول خاطئة!');
+        }
+      }).catch(err => {
+        if (u === 'admin7c' && p === '20262027') {
+          isAdminLoggedIn = true;
+          localStorage.setItem('admin_logged_in', 'true');
+          let loginBox = document.getElementById('loginBox');
+          let adminDash = document.getElementById('adminDashboard');
+          let schedCtrl = document.getElementById('scheduleAdminControls');
+          if(loginBox) loginBox.classList.add('hidden');
+          if(adminDash) adminDash.classList.remove('hidden');
+          if(schedCtrl) schedCtrl.classList.remove('hidden');
+          Android.showToast('مرحباً بك (وضع عدم الاتصال)');
+          renderScheduleTable();
+        } else {
+          Android.showToast('خطأ في الاتصال بالإنترنت');
+        }
+      });
+  }
+  function logoutAdmin() {
+    isAdminLoggedIn = false;
+    isScheduleEditable = false;
+    localStorage.removeItem('admin_logged_in');
+    let adminPass = document.getElementById('adminPass');
+    let loginBox = document.getElementById('loginBox');
+    let adminDash = document.getElementById('adminDashboard');
+    let schedCtrl = document.getElementById('scheduleAdminControls');
+    if(adminPass) adminPass.value = '';
+    if(adminDash) adminDash.classList.add('hidden');
+    if(loginBox) loginBox.classList.remove('hidden');
+    if(schedCtrl) schedCtrl.classList.add('hidden');
+    renderScheduleTable();
+  }
+  function updateWarning(btn) {
+    let warningText = document.getElementById('pubWarningInput').value.trim();
+    if(!warningText) { Android.showToast('يرجى كتابة نص التحذير أولاً'); return; }
+    btn.disabled = true;
+    let originalText = btn.innerHTML;
+    btn.innerHTML = 'جاري التحديث... <span class="spinner"></span>';
+    fetch(FIREBASE_URL + 'warning.json', {
+      method: 'PUT',
+      body: JSON.stringify(warningText)
+    }).then(() => {
+      globalData.warning = warningText;
+      localStorage.setItem('app_cache_v23', JSON.stringify(globalData));
+      let warnEl = document.getElementById('warningText');
+      if(warnEl) warnEl.innerText = warningText;
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('تم تحديث التحذير العام بنجاح ✅');
+    }).catch(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('فشل التحديث');
+    });
+  }
+  function onImagesPicked(arr) {
+    pickedImages = pickedImages.concat(arr);
+    updatePreviewUI();
+  }
+  function updatePreviewUI() {
+    let container = document.getElementById('previewContainer');
+    if(!container) return;
+    container.innerHTML = pickedImages.map((img, idx) => `
+      <div class='preview-wrap'>
+        <img class='preview-thumb' src='${img}'>
+        <div class='remove-thumb' onclick='removePickedImage(${idx})'>✕</div>
+      </div>
+    `).join('');
+  }
+  function removePickedImage(index) {
+    pickedImages.splice(index, 1);
+    updatePreviewUI();
+  }
+  async function uploadAndSaveLesson(btn) {
+    if (pickedImages.length === 0) {
+      Android.showToast('يرجى اختيار صورة واحدة على الأقل!');
+      return;
+    }
+    btn.disabled = true;
+    let originalText = btn.innerHTML;
+    btn.innerHTML = 'جاري الرفع والنشر... <span class="spinner"></span>';
+    Android.showToast('جاري رفع الصور إلى السحاب... يرجى الانتظار');
+    let uploadedUrls = [];
+    for (let base64Str of pickedImages) {
+      if (base64Str.startsWith('http')) {
+        uploadedUrls.push(base64Str);
+        continue;
+      }
+      try {
+        let rawBase64 = base64Str.split(',')[1];
+        let formData = new FormData();
+        formData.append('image', rawBase64);
+        let response = await fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, {
+          method: 'POST',
+          body: formData
+        });
+        let result = await response.json();
+        if (result.success) { uploadedUrls.push(result.data.url); }
+      } catch (e) {}
+    }
+    if (uploadedUrls.length === 0) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('فشل رفع الصور، تحقق من الإنترنت!');
+      return;
+    }
+    let editId = document.getElementById('editLessonId').value;
+    let cat = document.getElementById('pubCategory').value;
+    let sub = document.getElementById('pubSubject').value;
+    let timeSlot = document.getElementById('pubTimeSlot').value;
+    let title = document.getElementById('pubTitle').value.trim();
+    let desc = document.getElementById('pubDesc').value.trim();
+    let now = new Date();
+    let dateKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    let dateStr = dateKey + ' - ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    let isEx = (cat === 'exercise');
+    let lessonId = editId ? editId : 'lesson_' + Date.now();
+    let lessonData = {
+      isExercise: isEx,
+      subject: sub,
+      timeSlot: timeSlot,
+      title: title,
+      desc: desc,
+      images: uploadedUrls,
+      timestamp: now.getTime(),
+      dateKey: dateKey,
+      dateStr: dateStr,
+      read: editId ? true : false
+    };
+    fetch(FIREBASE_URL + 'lessons/' + lessonId + '.json', {
+      method: 'PUT',
+      body: JSON.stringify(lessonData)
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('تم الحفظ والنشر بنجاح ✅');
+      resetPublishForm();
+      fetchCloudDataSilent();
+      showTab('subjects');
+    }).catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('خطأ في الحفظ السحابي');
+    });
+  }
+  function editLesson(id) {
+    let list = getLessonsArray();
+    let lesson = list.find(item => item.id === id);
+    if (!lesson) return;
+    document.getElementById('editLessonId').value = lesson.id;
+    document.getElementById('pubCategory').value = lesson.isExercise ? 'exercise' : 'lesson';
+    document.getElementById('pubSubject').value = lesson.subject;
+    document.getElementById('pubTimeSlot').value = lesson.timeSlot || 'غير محدد';
+    document.getElementById('pubTitle').value = lesson.title || '';
+    document.getElementById('pubDesc').value = lesson.desc || '';
+    document.getElementById('formModeTitle').innerText = 'تعديل المحتوى ✏️';
+    document.getElementById('cancelEditBtn').classList.remove('hidden');
+    pickedImages = lesson.images ? [...lesson.images] : [];
+    updatePreviewUI();
+    showTab('admin');
+  }
+  function deleteLesson(id) {
+    if(confirm('هل أنت متأكد من الحذف نهائياً من السحاب؟')) {
+      fetch(FIREBASE_URL + 'lessons/' + id + '.json', { method: 'DELETE' })
+        .then(res => {
+          Android.showToast('تم الحذف بنجاح');
+          fetchCloudDataSilent();
+        });
+    }
+  }
+  function resetPublishForm() {
+    document.getElementById('editLessonId').value = '';
+    document.getElementById('pubTitle').value = '';
+    document.getElementById('pubDesc').value = '';
+    document.getElementById('formModeTitle').innerText = 'نشر محتوى جديد 📤';
+    document.getElementById('cancelEditBtn').classList.add('hidden');
+    pickedImages = [];
+    document.getElementById('previewContainer').innerHTML = '';
+  }
+  function applyTransform(withTransition) {
+    let img = document.getElementById('lightboxImg');
+    if (!img) return;
+    img.style.transition = withTransition ? 'transform 0.18s ease-out' : 'none';
+    img.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${currentZoom})`;
+  }
+  function openLightbox(imgSrc) {
+    currentZoom = 1;
+    panX = 0;
+    panY = 0;
+    let img = document.getElementById('lightboxImg');
+    img.src = imgSrc;
+    applyTransform(false);
+    document.getElementById('lightbox').style.display = 'flex';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+  }
+  function zoomButton(factor) {
+    let nextZoom = currentZoom * factor;
+    if (nextZoom < 1) { nextZoom = 1; panX = 0; panY = 0; }
+    if (nextZoom > 25) nextZoom = 25;
+    let ratio = nextZoom / currentZoom;
+    panX *= ratio;
+    panY *= ratio;
+    currentZoom = nextZoom;
+    applyTransform(true);
+  }
+  function resetZoom() {
+    currentZoom = 1;
+    panX = 0;
+    panY = 0;
+    applyTransform(true);
+  }
+  function setupSmoothPanZoom() {
+    let box = document.getElementById('lightbox-content');
+    if (!box) return;
+    box.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        let now = Date.now();
+        if (now - lastTapTime < 280) {
+          if (currentZoom > 1.2) {
+            resetZoom();
+          } else {
+            let cx = window.innerWidth / 2;
+            let cy = window.innerHeight / 2;
+            let dx = e.touches[0].clientX - cx;
+            let dy = e.touches[0].clientY - cy;
+            currentZoom = 3.5;
+            panX = -dx * 2.5;
+            panY = -dy * 2.5;
+            applyTransform(true);
+          }
+          lastTapTime = 0;
+          return;
+        }
+        lastTapTime = now;
+        isDragging = true;
+        startTouchX = e.touches[0].clientX - panX;
+        startTouchY = e.touches[0].clientY - panY;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        initialPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        lastPinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        lastPinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      }
+    }, {passive: false});
+
+    box.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging) {
+        panX = e.touches[0].clientX - startTouchX;
+        panY = e.touches[0].clientY - startTouchY;
+        applyTransform(false);
+      } else if (e.touches.length === 2 && initialPinchDist) {
+        let dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        let midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        let midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        let scaleFactor = dist / initialPinchDist;
+        let nextZoom = currentZoom * scaleFactor;
+        if (nextZoom < 0.8) nextZoom = 0.8;
+        if (nextZoom > 25) nextZoom = 25;
+        let actualRatio = nextZoom / currentZoom;
+        let cx = window.innerWidth / 2;
+        let cy = window.innerHeight / 2;
+        panX = (midX - cx) - ((midX - cx - panX) * actualRatio) + (midX - lastPinchMidX);
+        panY = (midY - cy) - ((midY - cy - panY) * actualRatio) + (midY - lastPinchMidY);
+        currentZoom = nextZoom;
+        initialPinchDist = dist;
+        lastPinchMidX = midX;
+        lastPinchMidY = midY;
+        applyTransform(false);
+      }
+    }, {passive: false});
+
+    box.addEventListener('touchend', function(e) {
+      if (e.touches.length === 1) {
+        initialPinchDist = null;
+        isDragging = true;
+        startTouchX = e.touches[0].clientX - panX;
+        startTouchY = e.touches[0].clientY - panY;
+      } else if (e.touches.length === 0) {
+        isDragging = false;
+        initialPinchDist = null;
+        if (currentZoom < 1) {
+          resetZoom();
+        }
+      }
+    }, {passive: false});
+  }
+
+  initApp();
+</script>
+</body>
+</html>
