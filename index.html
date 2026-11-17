@@ -266,36 +266,67 @@
     },
     openPdf: function(pdfDataUrl, fileName) {
       try {
+        let blobUrl = pdfDataUrl;
         if (pdfDataUrl.startsWith('data:')) {
           const parts = pdfDataUrl.split(',');
           const byteCharacters = atob(parts[1]);
-          const byteNumbers = new Array(byteCharacters.length);
+          const byteNumbers = new Uint8Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'application/pdf' });
-          const blobUrl = URL.createObjectURL(blob);
-          window.open(blobUrl, '_blank');
-        } else {
-          window.open(pdfDataUrl, '_blank');
+          const blob = new Blob([byteNumbers], { type: 'application/pdf' });
+          blobUrl = URL.createObjectURL(blob);
         }
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } catch (e) {
         this.downloadPdf(pdfDataUrl, fileName);
       }
     },
-    downloadPdf: function(pdfDataUrl, fileName) {
-      this.showToast('جاري تجهيز ملف PDF للتنزيل... ⏳');
+    downloadPdf: async function(pdfDataUrl, fileName) {
+      this.showToast('جاري تجهيز ملف PDF... ⏳');
       try {
+        const cleanName = fileName.endsWith('.pdf') ? fileName : fileName + '.pdf';
+        let blob;
+        if (pdfDataUrl.startsWith('data:')) {
+          const parts = pdfDataUrl.split(',');
+          const byteCharacters = atob(parts[1]);
+          const byteNumbers = new Uint8Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          blob = new Blob([byteNumbers], { type: 'application/pdf' });
+        } else {
+          const res = await fetch(pdfDataUrl);
+          blob = await res.blob();
+        }
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const fileObj = new File([blob], cleanName, { type: 'application/pdf' });
+        if (isIOS && navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+          await navigator.share({ files: [fileObj], title: cleanName });
+          this.showToast('تم فتح خيارات الحفظ ✅');
+          return;
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = pdfDataUrl;
-        a.download = fileName.endsWith('.pdf') ? fileName : fileName + '.pdf';
+        a.href = blobUrl;
+        a.download = cleanName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
         this.showToast('تم بدء تنزيل ملف PDF ✅');
       } catch (e) {
-        window.open(pdfDataUrl, '_blank');
+        if (e.name !== 'AbortError') {
+          window.open(pdfDataUrl, '_blank');
+        }
       }
     },
     openWhatsApp: function() {
