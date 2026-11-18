@@ -9,8 +9,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="المراد 7C">
-  <link rel="apple-touch-icon" href="https://i.ibb.co/h1HCYQ7h/5d8fc3ef6413.jpg">
-  <link rel="icon" type="image/jpeg" href="https://i.ibb.co/h1HCYQ7h/5d8fc3ef6413.jpg">
+  <link rel="apple-touch-icon" href="https://i.ibb.co/RG0GfWvB/1793717724984.jpg">
+  <link rel="icon" type="image/jpeg" href="https://i.ibb.co/RG0GfWvB/1793717724984.jpg">
   <meta name="theme-color" content="#0D9488">
 
   <style>
@@ -83,7 +83,7 @@
     .pdf-name { font-size: 12px; font-weight: bold; color: #92400E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pdf-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .btn-pdf-open { background: #0D9488; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: auto; }
-    .btn-pdf-dl { background: #D97706; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: auto; }
+    
     .pdf-preview-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     .pdf-preview-item { display: flex; align-items: center; justify-content: space-between; background: #FEF2F2; border: 1px solid #FECACA; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; color: #991B1B; }
 
@@ -106,11 +106,10 @@
 </head>
 <body>
   <input type="file" id="webFileInput" multiple accept="image/*" style="display:none" onchange="handleWebFiles(this.files)">
-  <input type="file" id="webPdfInput" multiple accept="application/pdf,.pdf" style="display:none" onchange="handleWebPdfs(this.files)">
   <div id="web-toast"></div>
 
   <header>
-    <img class='school-logo' src='https://i.ibb.co/h1HCYQ7h/5d8fc3ef6413.jpg' alt='شعار المدرسة'>
+    <img class='school-logo' src='https://i.ibb.co/RG0GfWvB/1793717724984.jpg' alt='شعار المدرسة'>
     <div class='header-text'>
       <h1 id='headerTitle'>مدارس المراد كرفور (7C)</h1>
       <p>العام الدراسي 2026 - 2027</p>
@@ -203,14 +202,16 @@
         <input type='text' id='pubTitle' placeholder='عنوان الدرس أو التمرين (اختياري)' style='margin-bottom:10px;'>
         <textarea id='pubDesc' placeholder='وصف أو ملاحظات (اختياري)' rows='2' style='margin-bottom:10px;'></textarea>
         
-        <label style='font-size:12px; font-weight:bold;'>صور المحتوى (استخدم أزرار الترتيب لضبط موقع كل صورة):</label>
+        <label style='font-size:12px; font-weight:bold;'>صور المحتوى (اختياري):</label>
         <div id='previewContainer' class='preview-grid'></div>
         <button style='background:#F0FDFA; color:var(--primary); font-weight:bold; border:1px dashed var(--primary); margin-bottom:10px;' onclick='Android.pickImages()'>📷 اختيار صور</button>
 
         <div id='pdfUploadSection' class='hidden'>
-          <label style='font-size:12px; font-weight:bold; color:#B45309; display:block; margin-bottom:6px;'>📄 ملفات PDF للتمارين الشاملة (اختياري):</label>
+          <label style='font-size:12px; font-weight:bold; color:#B45309; display:block; margin-bottom:6px;'>📄 روابط ملفات PDF الخارجية (اختياري):</label>
+          <input type="text" id="pdfNameInput" placeholder="اسم الملف (مثال: تمرين 1)" style="margin-bottom:6px;">
+          <input type="url" id="pdfLinkInput" placeholder="رابط الملف (جوجل درايف، ميديا فاير...)" style="margin-bottom:6px;">
+          <button type="button" style="background:#FFFBEB; color:#B45309; font-weight:bold; border:1px dashed #B45309; margin-bottom:10px;" onclick="addPdfLink()">➕ إضافة الرابط</button>
           <div id='pdfPreviewContainer' class='pdf-preview-list'></div>
-          <button type='button' style='background:#FFFBEB; color:#B45309; font-weight:bold; border:1px dashed #B45309; margin-bottom:10px;' onclick='Android.pickPdfs()'>📄 اختيار ملفات PDF</button>
         </div>
 
         <button id='btnSaveLesson' class='btn-primary' onclick='uploadAndSaveLesson(this)'>حفظ ونشر المحتوى سحابياً ✅</button>
@@ -242,7 +243,7 @@
   </div>
 
 <script>
-  // بيانات ربط Supabase الخاصة بك
+  // بيانات ربط Supabase
   const SUPABASE_URL = 'https://eyftgkrcpuztlswwhnex.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_VucWq2NX161sWn2QXxS--Q_KiG_Eeqt';
 
@@ -255,11 +256,6 @@
   const Android = {
     pickImages: function() {
       let input = document.getElementById('webFileInput');
-      input.value = '';
-      input.click();
-    },
-    pickPdfs: function() {
-      let input = document.getElementById('webPdfInput');
       input.value = '';
       input.click();
     },
@@ -279,67 +275,6 @@
         this.showToast('تم بدء تنزيل الصورة ✅');
       } catch (e) {
         window.open(imgUrl, '_blank');
-      }
-    },
-    openPdf: function(pdfDataUrl, fileName) {
-      try {
-        let blobUrl = pdfDataUrl;
-        if (pdfDataUrl.startsWith('data:')) {
-          const parts = pdfDataUrl.split(',');
-          const byteCharacters = atob(parts[1]);
-          const byteNumbers = new Uint8Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const blob = new Blob([byteNumbers], { type: 'application/pdf' });
-          blobUrl = URL.createObjectURL(blob);
-        }
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } catch (e) {
-        this.downloadPdf(pdfDataUrl, fileName);
-      }
-    },
-    downloadPdf: async function(pdfDataUrl, fileName) {
-      this.showToast('جاري تجهيز ملف PDF... ⏳');
-      try {
-        const cleanName = fileName.endsWith('.pdf') ? fileName : fileName + '.pdf';
-        let blob;
-        if (pdfDataUrl.startsWith('data:')) {
-          const parts = pdfDataUrl.split(',');
-          const byteCharacters = atob(parts[1]);
-          const byteNumbers = new Uint8Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          blob = new Blob([byteNumbers], { type: 'application/pdf' });
-        } else {
-          const res = await fetch(pdfDataUrl);
-          blob = await res.blob();
-        }
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const fileObj = new File([blob], cleanName, { type: 'application/pdf' });
-        if (isIOS && navigator.canShare && navigator.canShare({ files: [fileObj] })) {
-          await navigator.share({ files: [fileObj], title: cleanName });
-          this.showToast('تم فتح خيارات الحفظ ✅');
-          return;
-        }
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = cleanName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-        this.showToast('تم بدء تنزيل ملف PDF ✅');
-      } catch (e) {
-        if (e.name !== 'AbortError') { window.open(pdfDataUrl, '_blank'); }
       }
     },
     openWhatsApp: function() {
@@ -370,26 +305,6 @@
         }
       };
       reader.readAsDataURL(files[i]);
-    }
-  }
-
-  function handleWebPdfs(files) {
-    if (!files || files.length === 0) return;
-    let loadedCount = 0;
-    let tempArray = [];
-    for (let i = 0; i < files.length; i++) {
-      let file = files[i];
-      let reader = new FileReader();
-      reader.onload = function(e) {
-        tempArray.push({ index: i, name: file.name, data: e.target.result });
-        loadedCount++;
-        if (loadedCount === files.length) {
-          tempArray.sort((a, b) => a.index - b.index);
-          tempArray.forEach(item => pickedPdfs.push({ name: item.name, url: item.data }));
-          updatePdfPreviewUI();
-        }
-      };
-      reader.readAsDataURL(file);
     }
   }
 
@@ -463,9 +378,12 @@
       if (!timeoutReached) {
         timeoutReached = true;
         updateUIEverything();
-        if(callback) callback();
+        if(callback) {
+          Android.showToast('الإنترنت بطيء، تعذر جلب البيانات الجديدة ⚠️');
+          callback();
+        }
       }
-    }, 6000);
+    }, 20000); // 20 ثانية وقت انتظار كافٍ للشبكات البطيئة
     
     try {
       const [lessonsRes, settingsRes] = await Promise.all([
@@ -490,6 +408,7 @@
           try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
           if (hasChanged) { updateUIEverything(); }
         } else {
+          if(callback) Android.showToast('حدث خطأ في السيرفر ❌');
           updateUIEverything();
         }
         if(callback) callback();
@@ -498,6 +417,7 @@
       if (!timeoutReached) {
         clearTimeout(timer);
         timeoutReached = true;
+        if(callback) Android.showToast('تأكد من اتصالك بالإنترنت 🌐');
         updateUIEverything();
         if(callback) callback();
       }
@@ -748,7 +668,6 @@
                 </div>
                 <div class='pdf-actions'>
                   <button class='btn-pdf-open' onclick='openLessonPdf("${item.id}", ${pIdx})'>👁️ فتح</button>
-                  <button class='btn-pdf-dl' onclick='downloadLessonPdf("${item.id}", ${pIdx})'>⬇ تنزيل</button>
                 </div>
               </div>
             `).join('')}
@@ -761,15 +680,8 @@
   function openLessonPdf(lessonId, pdfIdx) {
     let lesson = globalData.lessons && globalData.lessons[lessonId];
     if (!lesson || !lesson.pdfs || !lesson.pdfs[pdfIdx]) return;
-    let pdf = lesson.pdfs[pdfIdx];
-    Android.openPdf(pdf.url, pdf.name || ('Exercise_' + lesson.subject + '_' + (pdfIdx + 1) + '.pdf'));
-  }
-
-  function downloadLessonPdf(lessonId, pdfIdx) {
-    let lesson = globalData.lessons && globalData.lessons[lessonId];
-    if (!lesson || !lesson.pdfs || !lesson.pdfs[pdfIdx]) return;
-    let pdf = lesson.pdfs[pdfIdx];
-    Android.downloadPdf(pdf.url, pdf.name || ('Exercise_' + lesson.subject + '_' + (pdfIdx + 1) + '.pdf'));
+    // فتح الرابط الخارجي مباشرة
+    window.open(lesson.pdfs[pdfIdx].url, '_blank');
   }
 
   function clearFilter() {
@@ -894,6 +806,17 @@
     updatePreviewUI();
   }
 
+  // إضافة روابط PDF الخارجية للمعاينة
+  function addPdfLink() {
+    let name = document.getElementById('pdfNameInput').value.trim();
+    let url = document.getElementById('pdfLinkInput').value.trim();
+    if(!url) { Android.showToast('يرجى إدخال الرابط أولاً'); return; }
+    pickedPdfs.push({name: name || 'ملف PDF خارجي', url: url});
+    document.getElementById('pdfNameInput').value = '';
+    document.getElementById('pdfLinkInput').value = '';
+    updatePdfPreviewUI();
+  }
+
   function updatePdfPreviewUI() {
     let container = document.getElementById('pdfPreviewContainer');
     if (!container) return;
@@ -914,23 +837,24 @@
     let cat = document.getElementById('pubCategory').value;
     let isEx = (cat === 'exercise');
 
-    if (!isEx && pickedImages.length === 0) {
-      Android.showToast('يرجى اختيار صورة واحدة على الأقل!');
-      return;
-    }
-    if (isEx && pickedImages.length === 0 && pickedPdfs.length === 0) {
-      Android.showToast('يرجى اختيار صورة واحدة أو ملف PDF واحد على الأقل!');
+    let title = document.getElementById('pubTitle').value.trim();
+    let desc = document.getElementById('pubDesc').value.trim();
+    
+    if (pickedImages.length === 0 && title === '' && desc === '' && pickedPdfs.length === 0) {
+      Android.showToast('يرجى إدخال أي محتوى لنشره!');
       return;
     }
 
     btn.disabled = true;
     let originalText = btn.innerHTML;
     btn.innerHTML = 'جاري الرفع والنشر... <span class="spinner"></span>';
-    Android.showToast('جاري رفع المحتوى إلى السحاب... يرجى الانتظار');
-    let uploadedUrls = [];
+    Android.showToast('جاري رفع الصور إلى ImgBB...');
     
+    let uploadedUrls = [];
     let activeImgbbKey = globalData.imgbb_key || FALLBACK_IMGBB_KEY;
+    let imgUploadError = false;
 
+    // عملية رفع الصور لـ ImgBB فقط
     for (let base64Str of pickedImages) {
       if (base64Str.startsWith('http')) {
         uploadedUrls.push(base64Str);
@@ -945,33 +869,44 @@
           body: formData
         });
         let result = await response.json();
-        if (result.success) { uploadedUrls.push(result.data.url); }
-      } catch (e) {}
-    }
-    if (pickedImages.length > 0 && uploadedUrls.length === 0) {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      Android.showToast('فشل رفع الصور، تحقق من الإنترنت أو صلاحية المفتاح!');
-      return;
+        if (result.success) { 
+          uploadedUrls.push(result.data.url); 
+        } else {
+          imgUploadError = true;
+          break; // توقف فوراً إذا فشل موقع ImgBB في قبول الصورة
+        }
+      } catch (e) {
+        console.error("ImgBB upload failed", e);
+        imgUploadError = true;
+        break; // توقف فوراً إذا انقطع الإنترنت
+      }
     }
     
+    // 🔴 الشرط الصارم (Atomic Check): إلغاء العملية بالكامل وعدم الحفظ في Supabase إذا فشلت الصور!
+    if (imgUploadError || (pickedImages.length > 0 && uploadedUrls.length < pickedImages.length)) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('❌ فشل رفع الصور لـ ImgBB! تم إلغاء النشر بالكامل. حاول لاحقاً.');
+      return; 
+    }
+    
+    // إذا اكتمل الرفع بنجاح (أو لم يكن هناك صور)، نقوم بحفظ الروابط في القاعدة
     let editId = document.getElementById('editLessonId').value;
     let sub = document.getElementById('pubSubject').value;
     let timeSlot = document.getElementById('pubTimeSlot').value;
-    let title = document.getElementById('pubTitle').value.trim();
-    let desc = document.getElementById('pubDesc').value.trim();
     let now = new Date();
     let dateKey = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     let dateStr = dateKey + ' - ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     let lessonId = editId ? editId : 'lesson_' + Date.now();
+    
     let lessonData = {
       isExercise: isEx,
       subject: sub,
       timeSlot: timeSlot,
       title: title,
       desc: desc,
-      images: uploadedUrls,
-      pdfs: isEx ? pickedPdfs : [],
+      images: uploadedUrls, // روابط ImgBB القصيرة فقط
+      pdfs: isEx ? pickedPdfs : [], // الروابط الخارجية للـ PDF فقط
       timestamp: now.getTime(),
       dateKey: dateKey,
       dateStr: dateStr,
