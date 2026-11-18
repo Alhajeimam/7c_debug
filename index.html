@@ -211,7 +211,7 @@
         <div id='pdfUploadSection' class='hidden'>
           <label style='font-size:12px; font-weight:bold; color:#B45309; display:block; margin-bottom:6px;'>📄 ملفات PDF للتمارين الشاملة (اختياري):</label>
           <div id='pdfPreviewContainer' class='pdf-preview-list'></div>
-          <button type='button' style='background:#FFFBEB; color:#B45309; font-weight:bold; border:1px dashed #B45309; margin-bottom:10px;' onclick='Android.pickPdfs()'>📄 اختيار ملفات PDF للرفع (Catbox)</button>
+          <button type='button' style='background:#FFFBEB; color:#B45309; font-weight:bold; border:1px dashed #B45309; margin-bottom:10px;' onclick='Android.pickPdfs()'>📄 رفع PDF إلى (Supabase)</button>
         </div>
 
         <button id='btnSaveLesson' class='btn-primary' onclick='uploadAndSaveLesson(this)'>حفظ ونشر المحتوى سحابياً ✅</button>
@@ -347,7 +347,6 @@
   function handleWebPdfs(files) {
     if (!files || files.length === 0) return;
     for (let i = 0; i < files.length; i++) {
-      // حفظ الملف كـ كائن (File Object) وليس Base64 للرفع المباشر
       pickedPdfs.push({ file: files[i], name: files[i].name });
     }
     updatePdfPreviewUI();
@@ -896,7 +895,7 @@
     let imgUploadError = false;
     let pdfUploadError = false;
 
-    // 1. نظام الرفع المزدوج للصور (ImgBB ثم Catbox إذا لزم الأمر)
+    // 1. رفع الصور لـ ImgBB ثم لـ Supabase (تجنباً لمشكلة Catbox CORS)
     if (pickedImages.length > 0) {
       Android.showToast('جاري رفع الصور...');
       for (let base64Str of pickedImages) {
@@ -909,7 +908,7 @@
         let formData = new FormData();
         formData.append('image', rawBase64);
         
-        // محاولة أولى: ImgBB
+        // المحاولة الأولى: ImgBB
         try {
           let response = await fetch('https://api.imgbb.com/1/upload?key=' + activeImgbbKey, {
             method: 'POST',
@@ -918,36 +917,36 @@
           let result = await response.json();
           if (result.success) { 
             uploadedUrls.push(result.data.url); 
-            continue; // نجح الرفع، انتقل للصورة التالية
+            continue; 
           }
-        } catch (e) { console.error("ImgBB upload failed, falling back to Catbox", e); }
+        } catch (e) { console.error("ImgBB upload failed", e); }
         
-        // المحاولة الثانية (إنقاذ): إذا فشل ImgBB لأي سبب، ارفع الصورة إلى Catbox!
+        // المحاولة الثانية: مساحة التخزين في Supabase (مضمونة ولا تعاني من CORS)
         try {
-          // تحويل Base64 إلى File Object لرفعه لـ Catbox
           const byteCharacters = atob(rawBase64);
           const byteNumbers = new Uint8Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const blob = new Blob([byteNumbers], { type: 'image/jpeg' });
-          const fileObj = new File([blob], 'image_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+          let safeName = 'img_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
           
-          let catboxForm = new FormData();
-          catboxForm.append('reqtype', 'fileupload');
-          catboxForm.append('fileToUpload', fileObj);
-          
-          let catboxRes = await fetch('https://catbox.moe/user/api.php', {
+          let supaRes = await fetch(SUPABASE_URL + '/storage/v1/object/pdfs/' + safeName, {
             method: 'POST',
-            body: catboxForm
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'image/jpeg'
+            },
+            body: blob
           });
           
-          if (catboxRes.ok) {
-            let textUrl = await catboxRes.text();
-            uploadedUrls.push(textUrl.trim());
+          if (supaRes.ok) {
+            let publicUrl = SUPABASE_URL + '/storage/v1/object/public/pdfs/' + safeName;
+            uploadedUrls.push(publicUrl);
           } else {
             imgUploadError = true;
-            break; // فشل في كلا الموقعين، توقف!
+            break;
           }
         } catch (e) {
           imgUploadError = true;
@@ -956,35 +955,37 @@
       }
     }
 
-    // الشرط الصارم للصور:
     if (imgUploadError || (pickedImages.length > 0 && uploadedUrls.length < pickedImages.length)) {
       btn.disabled = false;
       btn.innerHTML = originalText;
-      Android.showToast('❌ فشل رفع الصور بالكامل (تم الإلغاء)! تأكد من الإنترنت.');
+      Android.showToast('❌ فشل رفع الصور! تم إلغاء النشر بالكامل.');
       return; 
     }
     
-    // 2. رفع ملفات PDF لـ Catbox
+    // 2. رفع ملفات PDF لـ Supabase Storage بدلاً من Catbox
     if (isEx && pickedPdfs.length > 0) {
-      Android.showToast('جاري رفع ملفات PDF (قد يستغرق وقتاً)...');
+      Android.showToast('جاري رفع ملفات PDF لمساحتك الخاصة...');
       for (let pdfObj of pickedPdfs) {
         if (pdfObj.url) { 
           uploadedPdfs.push(pdfObj);
           continue;
         }
         try {
-          let formData = new FormData();
-          formData.append('reqtype', 'fileupload');
-          formData.append('fileToUpload', pdfObj.file);
+          let safeName = 'pdf_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.pdf';
           
-          let response = await fetch('https://catbox.moe/user/api.php', {
+          let response = await fetch(SUPABASE_URL + '/storage/v1/object/pdfs/' + safeName, {
             method: 'POST',
-            body: formData
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': pdfObj.file.type || 'application/pdf'
+            },
+            body: pdfObj.file
           });
           
           if (response.ok) {
-            let textUrl = await response.text();
-            uploadedPdfs.push({ name: pdfObj.name, url: textUrl.trim() });
+            let publicUrl = SUPABASE_URL + '/storage/v1/object/public/pdfs/' + safeName;
+            uploadedPdfs.push({ name: pdfObj.name, url: publicUrl });
           } else {
             pdfUploadError = true;
             break;
@@ -996,7 +997,6 @@
       }
     }
 
-    // الشرط الصارم للـ PDF:
     if (pdfUploadError || (pickedPdfs.length > 0 && uploadedPdfs.length < pickedPdfs.length)) {
       btn.disabled = false;
       btn.innerHTML = originalText;
@@ -1006,7 +1006,7 @@
     
     Android.showToast('جاري حفظ البيانات في السيرفر...');
 
-    // 3. الحفظ النهائي في Supabase
+    // 3. الحفظ النهائي في Supabase Database
     let editId = document.getElementById('editLessonId').value;
     let sub = document.getElementById('pubSubject').value;
     let timeSlot = document.getElementById('pubTimeSlot').value;
