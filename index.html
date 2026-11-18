@@ -67,7 +67,6 @@
     .img-item-wrap { position: relative; background: #000; border-radius: 6px; overflow: hidden; }
     .img-number-badge { position: absolute; bottom: 42px; left: 8px; background: rgba(13, 148, 136, 0.9); color: white; font-size: 14px; font-weight: bold; padding: 2px 8px; border-radius: 6px; backdrop-filter: blur(4px); box-shadow: 0 2px 6px rgba(0,0,0,0.3); pointer-events: none; z-index: 2; }
     
-    /* معاينة لوحة التحكم مع أزرار الترتيب */
     .preview-grid { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; margin-bottom: 10px; }
     .preview-wrap { position: relative; flex-shrink: 0; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 4px; text-align: center; }
     .preview-thumb { width: 85px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--primary); display: block; margin-bottom: 4px; }
@@ -77,7 +76,6 @@
     .preview-btn:hover { background: var(--primary); }
     .remove-thumb { background: var(--danger); color: white; border: none; font-size: 11px; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-    /* تصميم ملفات PDF في التمارين الشاملة */
     .pdfs-box { padding: 10px 14px; background: #FFFBEB; border-top: 1px solid #FEF3C7; display: flex; flex-direction: column; gap: 8px; }
     .pdf-item-card { display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #FDE68A; padding: 8px 12px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); gap: 8px; }
     .pdf-info { display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; }
@@ -102,6 +100,8 @@
     .hidden { display: none; }
 
     #web-toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: rgba(19, 78, 74, 0.95); color: white; padding: 10px 20px; border-radius: 25px; font-size: 13px; font-weight: bold; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; max-width: 90%; white-space: nowrap; }
+    
+    .manual-refresh-btn { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
   </style>
 </head>
 <body>
@@ -116,12 +116,16 @@
       <p>العام الدراسي 2026 - 2027</p>
     </div>
   </header>
+  
   <div id='globalWarning' class='warning-bar'>
     <span id='warningText'>جاري التحميل...</span>
   </div>
+  
   <div id='viewSubjects' class='container'>
+    <button class='manual-refresh-btn' onclick='manualRefreshData(this)'>🔄 تحديث للبحث عن دروس جديدة</button>
     <div class='grid' id='subjectsGrid'></div>
   </div>
+  
   <div id='viewLessons' class='container hidden'>
     <div class='toolbar'>
       <div class='toolbar-row'>
@@ -146,6 +150,7 @@
     </div>
     <div id='lessonsList'></div>
   </div>
+  
   <div id='viewSchedule' class='container hidden'>
     <div class='table-wrap'>
       <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;'>
@@ -163,6 +168,7 @@
       </table>
     </div>
   </div>
+  
   <div id='viewAdmin' class='container hidden'>
     <div id='loginBox' class='form-box'>
       <h3 style='margin-bottom:14px; text-align:center;'>تسجيل دخول المشرف 🔒</h3>
@@ -201,7 +207,6 @@
         <div id='previewContainer' class='preview-grid'></div>
         <button style='background:#F0FDFA; color:var(--primary); font-weight:bold; border:1px dashed var(--primary); margin-bottom:10px;' onclick='Android.pickImages()'>📷 اختيار صور</button>
 
-        <!-- قسم رفع ملفات PDF خاص بالتمارين الشاملة فقط -->
         <div id='pdfUploadSection' class='hidden'>
           <label style='font-size:12px; font-weight:bold; color:#B45309; display:block; margin-bottom:6px;'>📄 ملفات PDF للتمارين الشاملة (اختياري):</label>
           <div id='pdfPreviewContainer' class='pdf-preview-list'></div>
@@ -217,6 +222,7 @@
   <div class='developer-footer'>
     تطوير: الحاج احمدو القاظي | <span onclick='Android.openWhatsApp()'>تواصل مع المطور 💬</span>
   </div>
+  
   <div id='lightbox'>
     <button id='lightbox-close' onclick='closeLightbox()'>✕</button>
     <div id='lightbox-content'>
@@ -228,6 +234,7 @@
       <button class='zoom-btn' onclick='resetZoom()' style='font-size:12px; width:auto; padding:0 12px; border-radius:20px;'>إعادة</button>
     </div>
   </div>
+  
   <div class='bottom-nav'>
     <div class='nav-item active' id='navSubjects' onclick='showTab("subjects")'><span class='nav-icon'>📚</span>الرئيسية</div>
     <div class='nav-item' id='navSchedule' onclick='showTab("schedule")'><span class='nav-icon'>📅</span>الجدول</div>
@@ -235,6 +242,16 @@
   </div>
 
 <script>
+  // بيانات ربط Supabase الخاصة بك
+  const SUPABASE_URL = 'https://eyftgkrcpuztlswwhnex.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_VucWq2NX161sWn2QXxS--Q_KiG_Eeqt';
+
+  const supaHeaders = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+  };
+
   const Android = {
     pickImages: function() {
       let input = document.getElementById('webFileInput');
@@ -305,7 +322,6 @@
           const res = await fetch(pdfDataUrl);
           blob = await res.blob();
         }
-
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const fileObj = new File([blob], cleanName, { type: 'application/pdf' });
         if (isIOS && navigator.canShare && navigator.canShare({ files: [fileObj] })) {
@@ -313,7 +329,6 @@
           this.showToast('تم فتح خيارات الحفظ ✅');
           return;
         }
-
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
@@ -324,23 +339,18 @@
         setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
         this.showToast('تم بدء تنزيل ملف PDF ✅');
       } catch (e) {
-        if (e.name !== 'AbortError') {
-          window.open(pdfDataUrl, '_blank');
-        }
+        if (e.name !== 'AbortError') { window.open(pdfDataUrl, '_blank'); }
       }
     },
     openWhatsApp: function() {
-      const url = "https://api.whatsapp.com/send?phone=22244105798&text=" + encodeURIComponent("مرحباً المطور الحاج احمدو القاظي، لدي استفسار بخصوص تطبيق المدرسة");
-      window.open(url, '_blank');
+      window.open("https://api.whatsapp.com/send?phone=22244105798&text=" + encodeURIComponent("مرحباً المطور الحاج احمدو القاظي، لدي استفسار بخصوص تطبيق المدرسة"), '_blank');
     },
     showToast: function(msg) {
       const toast = document.getElementById('web-toast');
       toast.innerText = msg;
       toast.style.display = 'block';
       clearTimeout(window.toastTimer);
-      window.toastTimer = setTimeout(() => {
-        toast.style.display = 'none';
-      }, 3000);
+      window.toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
   };
 
@@ -354,7 +364,6 @@
         tempArray.push({ index: i, data: e.target.result });
         loadedCount++;
         if (loadedCount === files.length) {
-          // فرز الصور حسب ترتيب القائمة لضمان استقرار الإدخال الأولي
           tempArray.sort((a, b) => a.index - b.index);
           tempArray.forEach(item => pickedImages.push(item.data));
           updatePreviewUI();
@@ -384,8 +393,7 @@
     }
   }
 
-  const FIREBASE_URL = 'https://aravat-5a-default-rtdb.firebaseio.com/';
-  const IMGBB_KEY = '5807f7e8c7d21b6e771afc843be8577d';
+  const FALLBACK_IMGBB_KEY = '1bef17ca9c6279d79489753ade7c01cf'; 
   const SUBJECTS = [
     { code: 'M3', name: 'الرياضيات (M3)', color: '#0D9488' },
     { code: 'M4', name: 'الرياضيات (M4)', color: '#0F766E' },
@@ -411,16 +419,8 @@
   let isAdminLoggedIn = localStorage.getItem('admin_logged_in') === 'true';
   let isScheduleEditable = false;
 
-  let currentZoom = 1;
-  let panX = 0;
-  let panY = 0;
-  let isDragging = false;
-  let startTouchX = 0;
-  let startTouchY = 0;
-  let initialPinchDist = null;
-  let lastPinchMidX = 0;
-  let lastPinchMidY = 0;
-  let lastTapTime = 0;
+  let currentZoom = 1, panX = 0, panY = 0, isDragging = false, startTouchX = 0, startTouchY = 0;
+  let initialPinchDist = null, lastPinchMidX = 0, lastPinchMidY = 0, lastTapTime = 0;
 
   function getSuperscriptNumber(num) {
     const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
@@ -442,45 +442,68 @@
 
   function loadLocalCache() {
     let cached = localStorage.getItem('app_cache_v23');
-    if (cached) {
-      try { globalData = JSON.parse(cached); } catch(e){}
-    }
+    if (cached) { try { globalData = JSON.parse(cached); } catch(e){} }
     updateUIEverything();
   }
-  function fetchCloudDataSilent() {
+
+  function manualRefreshData(btn) {
+    let originalText = btn.innerHTML;
+    btn.innerHTML = 'جاري التحديث... ⏳';
+    btn.disabled = true;
+    fetchCloudDataSilent(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      Android.showToast('تم تحديث البيانات بنجاح ✅');
+    });
+  }
+
+  async function fetchCloudDataSilent(callback) {
     let timeoutReached = false;
     let timer = setTimeout(() => {
       if (!timeoutReached) {
         timeoutReached = true;
         updateUIEverything();
+        if(callback) callback();
       }
-    }, 2000);
-    fetch(FIREBASE_URL + '.json')
-      .then(res => res.json())
-      .then(data => {
-        if (!timeoutReached) {
-          clearTimeout(timer);
-          timeoutReached = true;
-          if (data) {
-            let hasChanged = JSON.stringify(data) !== JSON.stringify(globalData);
-            globalData = data;
-            if(!globalData.lessons) globalData.lessons = {};
-            if(!globalData.schedule) globalData.schedule = DEFAULT_SCHEDULE;
-            try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
-            if (hasChanged) { updateUIEverything(); }
-          } else {
-            updateUIEverything();
-          }
-        }
-      })
-      .catch(err => {
-        if (!timeoutReached) {
-          clearTimeout(timer);
-          timeoutReached = true;
+    }, 6000);
+    
+    try {
+      const [lessonsRes, settingsRes] = await Promise.all([
+        fetch(SUPABASE_URL + '/rest/v1/lessons?select=*', {headers: supaHeaders}),
+        fetch(SUPABASE_URL + '/rest/v1/settings?select=*', {headers: supaHeaders})
+      ]);
+      
+      if (!timeoutReached) {
+        clearTimeout(timer);
+        timeoutReached = true;
+        if (lessonsRes.ok && settingsRes.ok) {
+          const lessonsArray = await lessonsRes.json();
+          const settingsArray = await settingsRes.json();
+          
+          let newData = { lessons: {} };
+          lessonsArray.forEach(row => { newData.lessons[row.id] = row.payload; });
+          settingsArray.forEach(row => { newData[row.id] = row.payload; });
+          if(!newData.schedule) newData.schedule = DEFAULT_SCHEDULE;
+          
+          let hasChanged = JSON.stringify(newData) !== JSON.stringify(globalData);
+          globalData = newData;
+          try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
+          if (hasChanged) { updateUIEverything(); }
+        } else {
           updateUIEverything();
         }
-      });
+        if(callback) callback();
+      }
+    } catch(err) {
+      if (!timeoutReached) {
+        clearTimeout(timer);
+        timeoutReached = true;
+        updateUIEverything();
+        if(callback) callback();
+      }
+    }
   }
+
   function updateUIEverything() {
     let warnEl = document.getElementById('warningText');
     if(warnEl) { warnEl.innerText = globalData.warning || '⚠️ تنبيه هام.'; }
@@ -495,32 +518,26 @@
       renderLessons();
     }
   }
+
   function initApp() {
     loadLocalCache();
     let select = document.getElementById('pubSubject');
-    if(select) {
-      select.innerHTML = SUBJECTS.map(s => `<option value='${s.code}'>${s.code} - ${s.name}</option>`).join('');
-    }
+    if(select) select.innerHTML = SUBJECTS.map(s => `<option value='${s.code}'>${s.code} - ${s.name}</option>`).join('');
     let filterSelect = document.getElementById('exerciseFilterSubject');
-    if(filterSelect) {
-      filterSelect.innerHTML = `<option value='ALL'>📂 عرض تمارين كل المواد</option>` + SUBJECTS.map(s => `<option value='${s.code}'>${s.code}</option>`).join('');
-    }
+    if(filterSelect) filterSelect.innerHTML = `<option value='ALL'>📂 عرض تمارين كل المواد</option>` + SUBJECTS.map(s => `<option value='${s.code}'>${s.code}</option>`).join('');
+    
     if (isAdminLoggedIn) {
-      let loginBox = document.getElementById('loginBox');
-      let adminDash = document.getElementById('adminDashboard');
-      let schedCtrl = document.getElementById('scheduleAdminControls');
-      if(loginBox) loginBox.classList.add('hidden');
-      if(adminDash) adminDash.classList.remove('hidden');
-      if(schedCtrl) schedCtrl.classList.remove('hidden');
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      document.getElementById('scheduleAdminControls').classList.remove('hidden');
     } else {
-      let schedCtrl = document.getElementById('scheduleAdminControls');
-      if(schedCtrl) schedCtrl.classList.add('hidden');
+      document.getElementById('scheduleAdminControls').classList.add('hidden');
     }
     togglePdfUploadVisibility();
     fetchCloudDataSilent();
-    setInterval(fetchCloudDataSilent, 5000);
     setupSmoothPanZoom();
   }
+
   function getLessonsArray() {
     if (!globalData.lessons) return [];
     return Object.keys(globalData.lessons).map(key => {
@@ -596,9 +613,11 @@
         if(input) { sched[r].days[d] = input.value.trim() || '-'; }
       }
     }
-    fetch(FIREBASE_URL + 'schedule.json', {
-      method: 'PUT',
-      body: JSON.stringify(sched)
+    
+    fetch(SUPABASE_URL + '/rest/v1/settings?id=eq.schedule', {
+      method: 'PATCH',
+      headers: supaHeaders,
+      body: JSON.stringify({ payload: sched })
     }).then(() => {
       globalData.schedule = sched;
       try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
@@ -608,13 +627,25 @@
       renderScheduleTable();
       btn.disabled = false;
       btn.innerHTML = originalText;
-      Android.showToast('تم حفظ الجدول في السحاب ✅');
+      Android.showToast('تم حفظ الجدول سحابياً ✅');
     }).catch(() => {
       btn.disabled = false;
       btn.innerHTML = originalText;
       Android.showToast('فشل حفظ الجدول');
     });
   }
+  
+  function updateLessonReadStatus(item) {
+    if (!item.read) {
+      item.read = true;
+      fetch(SUPABASE_URL + '/rest/v1/lessons?id=eq.' + item.id, {
+        method: 'PATCH',
+        headers: supaHeaders,
+        body: JSON.stringify({ payload: item })
+      });
+    }
+  }
+
   function openSubject(code) {
     currentViewMode = 'subject';
     currentSubjectCode = code;
@@ -624,15 +655,13 @@
     document.getElementById('exerciseSubjectFilterRow').classList.add('hidden');
     let list = getLessonsArray();
     list.forEach(item => {
-      if(!item.isExercise && item.subject === code && !item.read) {
-        fetch(FIREBASE_URL + 'lessons/' + item.id + '/read.json', { method: 'PUT', body: 'true' });
-        item.read = true;
-      }
+      if(!item.isExercise && item.subject === code) { updateLessonReadStatus(item); }
     });
     try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
     renderSubjects();
     renderLessons();
   }
+  
   function openExercises() {
     currentViewMode = 'exercises';
     currentSubjectCode = null;
@@ -643,15 +672,13 @@
     document.getElementById('exerciseFilterSubject').value = 'ALL';
     let list = getLessonsArray();
     list.forEach(item => {
-      if(item.isExercise && !item.read) {
-        fetch(FIREBASE_URL + 'lessons/' + item.id + '/read.json', { method: 'PUT', body: 'true' });
-        item.read = true;
-      }
+      if(item.isExercise) { updateLessonReadStatus(item); }
     });
     try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
     renderSubjects();
     renderLessons();
   }
+  
   function renderLessons() {
     let list = getLessonsArray();
     let searchBox = document.getElementById('searchBox');
@@ -779,68 +806,49 @@
       document.getElementById('navAdmin').classList.add('active');
     }
   }
+  
   function loginAdmin() {
     let u = document.getElementById('adminUser').value.trim();
     let p = document.getElementById('adminPass').value.trim();
-    fetch(FIREBASE_URL + 'admin.json')
-      .then(res => res.json())
-      .then(adminData => {
-        let correctUser = adminData ? adminData.username : 'admin7c';
-        let correctPass = adminData ? adminData.password : '20262027';
-        if (u === correctUser && p === correctPass) {
-          isAdminLoggedIn = true;
-          localStorage.setItem('admin_logged_in', 'true');
-          let loginBox = document.getElementById('loginBox');
-          let adminDash = document.getElementById('adminDashboard');
-          let schedCtrl = document.getElementById('scheduleAdminControls');
-          if(loginBox) loginBox.classList.add('hidden');
-          if(adminDash) adminDash.classList.remove('hidden');
-          if(schedCtrl) schedCtrl.classList.remove('hidden');
-          Android.showToast('مرحباً بك في لوحة تحكم المشرف');
-          renderScheduleTable();
-        } else {
-          Android.showToast('بيانات الدخول خاطئة!');
-        }
-      }).catch(err => {
-        if (u === 'admin7c' && p === '20262027') {
-          isAdminLoggedIn = true;
-          localStorage.setItem('admin_logged_in', 'true');
-          let loginBox = document.getElementById('loginBox');
-          let adminDash = document.getElementById('adminDashboard');
-          let schedCtrl = document.getElementById('scheduleAdminControls');
-          if(loginBox) loginBox.classList.add('hidden');
-          if(adminDash) adminDash.classList.remove('hidden');
-          if(schedCtrl) schedCtrl.classList.remove('hidden');
-          Android.showToast('مرحباً بك (وضع عدم الاتصال)');
-          renderScheduleTable();
-        } else {
-          Android.showToast('خطأ في الاتصال بالإنترنت');
-        }
-      });
+    
+    let correctUser = globalData.admin ? globalData.admin.username : 'admin7c';
+    let correctPass = globalData.admin ? globalData.admin.password : '20262027';
+    
+    if (u === correctUser && p === correctPass) {
+      isAdminLoggedIn = true;
+      localStorage.setItem('admin_logged_in', 'true');
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      document.getElementById('scheduleAdminControls').classList.remove('hidden');
+      Android.showToast('مرحباً بك في لوحة تحكم المشرف');
+      renderScheduleTable();
+    } else {
+      Android.showToast('بيانات الدخول خاطئة!');
+    }
   }
+  
   function logoutAdmin() {
     isAdminLoggedIn = false;
     isScheduleEditable = false;
     localStorage.removeItem('admin_logged_in');
-    let adminPass = document.getElementById('adminPass');
-    let loginBox = document.getElementById('loginBox');
-    let adminDash = document.getElementById('adminDashboard');
-    let schedCtrl = document.getElementById('scheduleAdminControls');
-    if(adminPass) adminPass.value = '';
-    if(adminDash) adminDash.classList.add('hidden');
-    if(loginBox) loginBox.classList.remove('hidden');
-    if(schedCtrl) schedCtrl.classList.add('hidden');
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminDashboard').classList.add('hidden');
+    document.getElementById('loginBox').classList.remove('hidden');
+    document.getElementById('scheduleAdminControls').classList.add('hidden');
     renderScheduleTable();
   }
+  
   function updateWarning(btn) {
     let warningText = document.getElementById('pubWarningInput').value.trim();
     if(!warningText) { Android.showToast('يرجى كتابة نص التحذير أولاً'); return; }
     btn.disabled = true;
     let originalText = btn.innerHTML;
     btn.innerHTML = 'جاري التحديث... <span class="spinner"></span>';
-    fetch(FIREBASE_URL + 'warning.json', {
-      method: 'PUT',
-      body: JSON.stringify(warningText)
+    
+    fetch(SUPABASE_URL + '/rest/v1/settings?id=eq.warning', {
+      method: 'PATCH',
+      headers: supaHeaders,
+      body: JSON.stringify({ payload: warningText })
     }).then(() => {
       globalData.warning = warningText;
       try { localStorage.setItem('app_cache_v23', JSON.stringify(globalData)); } catch(e){}
@@ -856,7 +864,6 @@
     });
   }
 
-  // دوال التحكم بالترتيب اليدوي للصور في المعاينة
   function updatePreviewUI() {
     let container = document.getElementById('previewContainer');
     if(!container) return;
@@ -887,7 +894,6 @@
     updatePreviewUI();
   }
 
-  // دوال معاينة وحذف ملفات PDF في لوحة التحكم
   function updatePdfPreviewUI() {
     let container = document.getElementById('pdfPreviewContainer');
     if (!container) return;
@@ -922,6 +928,9 @@
     btn.innerHTML = 'جاري الرفع والنشر... <span class="spinner"></span>';
     Android.showToast('جاري رفع المحتوى إلى السحاب... يرجى الانتظار');
     let uploadedUrls = [];
+    
+    let activeImgbbKey = globalData.imgbb_key || FALLBACK_IMGBB_KEY;
+
     for (let base64Str of pickedImages) {
       if (base64Str.startsWith('http')) {
         uploadedUrls.push(base64Str);
@@ -931,7 +940,7 @@
         let rawBase64 = base64Str.split(',')[1];
         let formData = new FormData();
         formData.append('image', rawBase64);
-        let response = await fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_KEY, {
+        let response = await fetch('https://api.imgbb.com/1/upload?key=' + activeImgbbKey, {
           method: 'POST',
           body: formData
         });
@@ -942,9 +951,10 @@
     if (pickedImages.length > 0 && uploadedUrls.length === 0) {
       btn.disabled = false;
       btn.innerHTML = originalText;
-      Android.showToast('فشل رفع الصور، تحقق من الإنترنت!');
+      Android.showToast('فشل رفع الصور، تحقق من الإنترنت أو صلاحية المفتاح!');
       return;
     }
+    
     let editId = document.getElementById('editLessonId').value;
     let sub = document.getElementById('pubSubject').value;
     let timeSlot = document.getElementById('pubTimeSlot').value;
@@ -967,12 +977,14 @@
       dateStr: dateStr,
       read: editId ? true : false
     };
-    fetch(FIREBASE_URL + 'lessons/' + lessonId + '.json', {
-      method: 'PUT',
-      body: JSON.stringify(lessonData)
+    
+    fetch(SUPABASE_URL + '/rest/v1/lessons', {
+      method: 'POST',
+      headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: lessonId, payload: lessonData })
     })
-    .then(res => res.json())
-    .then(data => {
+    .then(async res => {
+      if(!res.ok) throw new Error('Network Error');
       btn.disabled = false;
       btn.innerHTML = originalText;
       Android.showToast('تم الحفظ والنشر بنجاح ✅');
@@ -985,6 +997,7 @@
       Android.showToast('خطأ في الحفظ السحابي');
     });
   }
+  
   function editLesson(id) {
     let list = getLessonsArray();
     let lesson = list.find(item => item.id === id);
@@ -1004,15 +1017,17 @@
     updatePdfPreviewUI();
     showTab('admin');
   }
+  
   function deleteLesson(id) {
     if(confirm('هل أنت متأكد من الحذف نهائياً من السحاب؟')) {
-      fetch(FIREBASE_URL + 'lessons/' + id + '.json', { method: 'DELETE' })
+      fetch(SUPABASE_URL + '/rest/v1/lessons?id=eq.' + id, { method: 'DELETE', headers: supaHeaders })
         .then(res => {
           Android.showToast('تم الحذف بنجاح');
           fetchCloudDataSilent();
         });
     }
   }
+  
   function resetPublishForm() {
     document.getElementById('editLessonId').value = '';
     document.getElementById('pubTitle').value = '';
@@ -1026,6 +1041,7 @@
     if (pdfPrev) pdfPrev.innerHTML = '';
     togglePdfUploadVisibility();
   }
+  
   function applyTransform(withTransition) {
     let img = document.getElementById('lightboxImg');
     if (!img) return;
@@ -1033,33 +1049,26 @@
     img.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${currentZoom})`;
   }
   function openLightbox(imgSrc) {
-    currentZoom = 1;
-    panX = 0;
-    panY = 0;
+    currentZoom = 1; panX = 0; panY = 0;
     let img = document.getElementById('lightboxImg');
     img.src = imgSrc;
     applyTransform(false);
     document.getElementById('lightbox').style.display = 'flex';
   }
-  function closeLightbox() {
-    document.getElementById('lightbox').style.display = 'none';
-  }
+  function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
   function zoomButton(factor) {
     let nextZoom = currentZoom * factor;
     if (nextZoom < 1) { nextZoom = 1; panX = 0; panY = 0; }
     if (nextZoom > 25) nextZoom = 25;
     let ratio = nextZoom / currentZoom;
-    panX *= ratio;
-    panY *= ratio;
-    currentZoom = nextZoom;
+    panX *= ratio; panY *= ratio; currentZoom = nextZoom;
     applyTransform(true);
   }
   function resetZoom() {
-    currentZoom = 1;
-    panX = 0;
-    panY = 0;
+    currentZoom = 1; panX = 0; panY = 0;
     applyTransform(true);
   }
+  
   function setupSmoothPanZoom() {
     let box = document.getElementById('lightbox-content');
     if (!box) return;
@@ -1067,31 +1076,18 @@
       if (e.touches.length === 1) {
         let now = Date.now();
         if (now - lastTapTime < 280) {
-          if (currentZoom > 1.2) {
-            resetZoom();
-          } else {
-            let cx = window.innerWidth / 2;
-            let cy = window.innerHeight / 2;
-            let dx = e.touches[0].clientX - cx;
-            let dy = e.touches[0].clientY - cy;
-            currentZoom = 3.5;
-            panX = -dx * 2.5;
-            panY = -dy * 2.5;
-            applyTransform(true);
+          if (currentZoom > 1.2) { resetZoom(); } else {
+            let cx = window.innerWidth / 2; let cy = window.innerHeight / 2;
+            let dx = e.touches[0].clientX - cx; let dy = e.touches[0].clientY - cy;
+            currentZoom = 3.5; panX = -dx * 2.5; panY = -dy * 2.5; applyTransform(true);
           }
-          lastTapTime = 0;
-          return;
+          lastTapTime = 0; return;
         }
-        lastTapTime = now;
-        isDragging = true;
-        startTouchX = e.touches[0].clientX - panX;
-        startTouchY = e.touches[0].clientY - panY;
+        lastTapTime = now; isDragging = true;
+        startTouchX = e.touches[0].clientX - panX; startTouchY = e.touches[0].clientY - panY;
       } else if (e.touches.length === 2) {
         isDragging = false;
-        initialPinchDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
+        initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         lastPinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
         lastPinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       }
@@ -1100,45 +1096,28 @@
     box.addEventListener('touchmove', function(e) {
       e.preventDefault();
       if (e.touches.length === 1 && isDragging) {
-        panX = e.touches[0].clientX - startTouchX;
-        panY = e.touches[0].clientY - startTouchY;
-        applyTransform(false);
+        panX = e.touches[0].clientX - startTouchX; panY = e.touches[0].clientY - startTouchY; applyTransform(false);
       } else if (e.touches.length === 2 && initialPinchDist) {
-        let dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        let midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        let midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        let scaleFactor = dist / initialPinchDist;
-        let nextZoom = currentZoom * scaleFactor;
-        if (nextZoom < 0.8) nextZoom = 0.8;
-        if (nextZoom > 25) nextZoom = 25;
+        let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        let midX = (e.touches[0].clientX + e.touches[1].clientX) / 2; let midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        let scaleFactor = dist / initialPinchDist; let nextZoom = currentZoom * scaleFactor;
+        if (nextZoom < 0.8) nextZoom = 0.8; if (nextZoom > 25) nextZoom = 25;
         let actualRatio = nextZoom / currentZoom;
-        let cx = window.innerWidth / 2;
-        let cy = window.innerHeight / 2;
+        let cx = window.innerWidth / 2; let cy = window.innerHeight / 2;
         panX = (midX - cx) - ((midX - cx - panX) * actualRatio) + (midX - lastPinchMidX);
         panY = (midY - cy) - ((midY - cy - panY) * actualRatio) + (midY - lastPinchMidY);
-        currentZoom = nextZoom;
-        initialPinchDist = dist;
-        lastPinchMidX = midX;
-        lastPinchMidY = midY;
+        currentZoom = nextZoom; initialPinchDist = dist; lastPinchMidX = midX; lastPinchMidY = midY;
         applyTransform(false);
       }
     }, {passive: false});
 
     box.addEventListener('touchend', function(e) {
       if (e.touches.length === 1) {
-        initialPinchDist = null;
-        isDragging = true;
-        startTouchX = e.touches[0].clientX - panX;
-        startTouchY = e.touches[0].clientY - panY;
+        initialPinchDist = null; isDragging = true;
+        startTouchX = e.touches[0].clientX - panX; startTouchY = e.touches[0].clientY - panY;
       } else if (e.touches.length === 0) {
-        isDragging = false;
-        initialPinchDist = null;
-        if (currentZoom < 1) {
-          resetZoom();
-        }
+        isDragging = false; initialPinchDist = null;
+        if (currentZoom < 1) { resetZoom(); }
       }
     }, {passive: false});
   }
