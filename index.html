@@ -83,6 +83,7 @@
     .pdf-name { font-size: 12px; font-weight: bold; color: #92400E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pdf-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .btn-pdf-open { background: #0D9488; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: auto; }
+    .btn-pdf-dl { background: #D97706; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: auto; }
     
     .pdf-preview-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     .pdf-preview-item { display: flex; align-items: center; justify-content: space-between; background: #FEF2F2; border: 1px solid #FECACA; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; color: #991B1B; }
@@ -106,6 +107,7 @@
 </head>
 <body>
   <input type="file" id="webFileInput" multiple accept="image/*" style="display:none" onchange="handleWebFiles(this.files)">
+  <input type="file" id="webPdfInput" multiple accept="application/pdf,.pdf" style="display:none" onchange="handleWebPdfs(this.files)">
   <div id="web-toast"></div>
 
   <header>
@@ -207,11 +209,9 @@
         <button style='background:#F0FDFA; color:var(--primary); font-weight:bold; border:1px dashed var(--primary); margin-bottom:10px;' onclick='Android.pickImages()'>📷 اختيار صور</button>
 
         <div id='pdfUploadSection' class='hidden'>
-          <label style='font-size:12px; font-weight:bold; color:#B45309; display:block; margin-bottom:6px;'>📄 روابط ملفات PDF الخارجية (اختياري):</label>
-          <input type="text" id="pdfNameInput" placeholder="اسم الملف (مثال: تمرين 1)" style="margin-bottom:6px;">
-          <input type="url" id="pdfLinkInput" placeholder="رابط الملف (جوجل درايف، ميديا فاير...)" style="margin-bottom:6px;">
-          <button type="button" style="background:#FFFBEB; color:#B45309; font-weight:bold; border:1px dashed #B45309; margin-bottom:10px;" onclick="addPdfLink()">➕ إضافة الرابط</button>
+          <label style='font-size:12px; font-weight:bold; color:#B45309; display:block; margin-bottom:6px;'>📄 ملفات PDF للتمارين الشاملة (اختياري):</label>
           <div id='pdfPreviewContainer' class='pdf-preview-list'></div>
+          <button type='button' style='background:#FFFBEB; color:#B45309; font-weight:bold; border:1px dashed #B45309; margin-bottom:10px;' onclick='Android.pickPdfs()'>📄 اختيار ملفات PDF للرفع (Catbox)</button>
         </div>
 
         <button id='btnSaveLesson' class='btn-primary' onclick='uploadAndSaveLesson(this)'>حفظ ونشر المحتوى سحابياً ✅</button>
@@ -259,6 +259,11 @@
       input.value = '';
       input.click();
     },
+    pickPdfs: function() {
+      let input = document.getElementById('webPdfInput');
+      input.value = '';
+      input.click();
+    },
     downloadImage: async function(imgUrl, fileName) {
       this.showToast('جاري تجهيز الصورة للتنزيل... ⏳');
       try {
@@ -275,6 +280,37 @@
         this.showToast('تم بدء تنزيل الصورة ✅');
       } catch (e) {
         window.open(imgUrl, '_blank');
+      }
+    },
+    openPdf: function(pdfDataUrl, fileName) {
+      window.open(pdfDataUrl, '_blank');
+    },
+    downloadPdf: async function(pdfDataUrl, fileName) {
+      this.showToast('جاري تجهيز ملف PDF... ⏳');
+      try {
+        const cleanName = fileName.endsWith('.pdf') ? fileName : fileName + '.pdf';
+        const res = await fetch(pdfDataUrl);
+        const blob = await res.blob();
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const fileObj = new File([blob], cleanName, { type: 'application/pdf' });
+        if (isIOS && navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+          await navigator.share({ files: [fileObj], title: cleanName });
+          this.showToast('تم فتح خيارات الحفظ ✅');
+          return;
+        }
+        
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = cleanName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        this.showToast('تم بدء تنزيل ملف PDF ✅');
+      } catch (e) {
+        if (e.name !== 'AbortError') { window.open(pdfDataUrl, '_blank'); }
       }
     },
     openWhatsApp: function() {
@@ -306,6 +342,15 @@
       };
       reader.readAsDataURL(files[i]);
     }
+  }
+
+  function handleWebPdfs(files) {
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+      // حفظ الملف كـ كائن (File Object) وليس Base64 للرفع المباشر
+      pickedPdfs.push({ file: files[i], name: files[i].name });
+    }
+    updatePdfPreviewUI();
   }
 
   const FALLBACK_IMGBB_KEY = '1bef17ca9c6279d79489753ade7c01cf'; 
@@ -383,7 +428,7 @@
           callback();
         }
       }
-    }, 20000); // 20 ثانية وقت انتظار كافٍ للشبكات البطيئة
+    }, 20000); 
     
     try {
       const [lessonsRes, settingsRes] = await Promise.all([
@@ -668,6 +713,7 @@
                 </div>
                 <div class='pdf-actions'>
                   <button class='btn-pdf-open' onclick='openLessonPdf("${item.id}", ${pIdx})'>👁️ فتح</button>
+                  <button class='btn-pdf-dl' onclick='downloadLessonPdf("${item.id}", ${pIdx})'>⬇ تنزيل</button>
                 </div>
               </div>
             `).join('')}
@@ -680,8 +726,13 @@
   function openLessonPdf(lessonId, pdfIdx) {
     let lesson = globalData.lessons && globalData.lessons[lessonId];
     if (!lesson || !lesson.pdfs || !lesson.pdfs[pdfIdx]) return;
-    // فتح الرابط الخارجي مباشرة
-    window.open(lesson.pdfs[pdfIdx].url, '_blank');
+    Android.openPdf(lesson.pdfs[pdfIdx].url, lesson.pdfs[pdfIdx].name || 'Exercise.pdf');
+  }
+
+  function downloadLessonPdf(lessonId, pdfIdx) {
+    let lesson = globalData.lessons && globalData.lessons[lessonId];
+    if (!lesson || !lesson.pdfs || !lesson.pdfs[pdfIdx]) return;
+    Android.downloadPdf(lesson.pdfs[pdfIdx].url, lesson.pdfs[pdfIdx].name || 'Exercise.pdf');
   }
 
   function clearFilter() {
@@ -782,7 +833,7 @@
     container.innerHTML = pickedImages.map((img, idx) => `
       <div class='preview-wrap'>
         <div class='preview-badge'>#${idx + 1}</div>
-        <img class='preview-thumb' src='${img}'>
+        <img class='preview-thumb' src='${img.startsWith("http") ? img : img}'>
         <div class='preview-controls'>
           <button class='preview-btn' onclick='moveImage(${idx}, -1)' title='نحر لليسار'>◀</button>
           <button class='remove-thumb' onclick='removePickedImage(${idx})' title='حذف'>✕</button>
@@ -806,23 +857,12 @@
     updatePreviewUI();
   }
 
-  // إضافة روابط PDF الخارجية للمعاينة
-  function addPdfLink() {
-    let name = document.getElementById('pdfNameInput').value.trim();
-    let url = document.getElementById('pdfLinkInput').value.trim();
-    if(!url) { Android.showToast('يرجى إدخال الرابط أولاً'); return; }
-    pickedPdfs.push({name: name || 'ملف PDF خارجي', url: url});
-    document.getElementById('pdfNameInput').value = '';
-    document.getElementById('pdfLinkInput').value = '';
-    updatePdfPreviewUI();
-  }
-
   function updatePdfPreviewUI() {
     let container = document.getElementById('pdfPreviewContainer');
     if (!container) return;
-    container.innerHTML = pickedPdfs.map((pdf, idx) => `
+    container.innerHTML = pickedPdfs.map((pdfObj, idx) => `
       <div class='pdf-preview-item'>
-        <span style='overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;'>📄 ${pdf.name}</span>
+        <span style='overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;'>📄 ${pdfObj.name}</span>
         <button type='button' class='remove-thumb' style='width:auto;' onclick='removePickedPdf(${idx})'>✕</button>
       </div>
     `).join('');
@@ -848,49 +888,125 @@
     btn.disabled = true;
     let originalText = btn.innerHTML;
     btn.innerHTML = 'جاري الرفع والنشر... <span class="spinner"></span>';
-    Android.showToast('جاري رفع الصور إلى ImgBB...');
     
     let uploadedUrls = [];
+    let uploadedPdfs = [];
     let activeImgbbKey = globalData.imgbb_key || FALLBACK_IMGBB_KEY;
+    
     let imgUploadError = false;
+    let pdfUploadError = false;
 
-    // عملية رفع الصور لـ ImgBB فقط
-    for (let base64Str of pickedImages) {
-      if (base64Str.startsWith('http')) {
-        uploadedUrls.push(base64Str);
-        continue;
-      }
-      try {
+    // 1. نظام الرفع المزدوج للصور (ImgBB ثم Catbox إذا لزم الأمر)
+    if (pickedImages.length > 0) {
+      Android.showToast('جاري رفع الصور...');
+      for (let base64Str of pickedImages) {
+        if (base64Str.startsWith('http')) {
+          uploadedUrls.push(base64Str);
+          continue;
+        }
+        
         let rawBase64 = base64Str.split(',')[1];
         let formData = new FormData();
         formData.append('image', rawBase64);
-        let response = await fetch('https://api.imgbb.com/1/upload?key=' + activeImgbbKey, {
-          method: 'POST',
-          body: formData
-        });
-        let result = await response.json();
-        if (result.success) { 
-          uploadedUrls.push(result.data.url); 
-        } else {
+        
+        // محاولة أولى: ImgBB
+        try {
+          let response = await fetch('https://api.imgbb.com/1/upload?key=' + activeImgbbKey, {
+            method: 'POST',
+            body: formData
+          });
+          let result = await response.json();
+          if (result.success) { 
+            uploadedUrls.push(result.data.url); 
+            continue; // نجح الرفع، انتقل للصورة التالية
+          }
+        } catch (e) { console.error("ImgBB upload failed, falling back to Catbox", e); }
+        
+        // المحاولة الثانية (إنقاذ): إذا فشل ImgBB لأي سبب، ارفع الصورة إلى Catbox!
+        try {
+          // تحويل Base64 إلى File Object لرفعه لـ Catbox
+          const byteCharacters = atob(rawBase64);
+          const byteNumbers = new Uint8Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const blob = new Blob([byteNumbers], { type: 'image/jpeg' });
+          const fileObj = new File([blob], 'image_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+          
+          let catboxForm = new FormData();
+          catboxForm.append('reqtype', 'fileupload');
+          catboxForm.append('fileToUpload', fileObj);
+          
+          let catboxRes = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: catboxForm
+          });
+          
+          if (catboxRes.ok) {
+            let textUrl = await catboxRes.text();
+            uploadedUrls.push(textUrl.trim());
+          } else {
+            imgUploadError = true;
+            break; // فشل في كلا الموقعين، توقف!
+          }
+        } catch (e) {
           imgUploadError = true;
-          break; // توقف فوراً إذا فشل موقع ImgBB في قبول الصورة
+          break;
         }
-      } catch (e) {
-        console.error("ImgBB upload failed", e);
-        imgUploadError = true;
-        break; // توقف فوراً إذا انقطع الإنترنت
       }
     }
-    
-    // 🔴 الشرط الصارم (Atomic Check): إلغاء العملية بالكامل وعدم الحفظ في Supabase إذا فشلت الصور!
+
+    // الشرط الصارم للصور:
     if (imgUploadError || (pickedImages.length > 0 && uploadedUrls.length < pickedImages.length)) {
       btn.disabled = false;
       btn.innerHTML = originalText;
-      Android.showToast('❌ فشل رفع الصور لـ ImgBB! تم إلغاء النشر بالكامل. حاول لاحقاً.');
+      Android.showToast('❌ فشل رفع الصور بالكامل (تم الإلغاء)! تأكد من الإنترنت.');
       return; 
     }
     
-    // إذا اكتمل الرفع بنجاح (أو لم يكن هناك صور)، نقوم بحفظ الروابط في القاعدة
+    // 2. رفع ملفات PDF لـ Catbox
+    if (isEx && pickedPdfs.length > 0) {
+      Android.showToast('جاري رفع ملفات PDF (قد يستغرق وقتاً)...');
+      for (let pdfObj of pickedPdfs) {
+        if (pdfObj.url) { 
+          uploadedPdfs.push(pdfObj);
+          continue;
+        }
+        try {
+          let formData = new FormData();
+          formData.append('reqtype', 'fileupload');
+          formData.append('fileToUpload', pdfObj.file);
+          
+          let response = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (response.ok) {
+            let textUrl = await response.text();
+            uploadedPdfs.push({ name: pdfObj.name, url: textUrl.trim() });
+          } else {
+            pdfUploadError = true;
+            break;
+          }
+        } catch (e) {
+          pdfUploadError = true;
+          break;
+        }
+      }
+    }
+
+    // الشرط الصارم للـ PDF:
+    if (pdfUploadError || (pickedPdfs.length > 0 && uploadedPdfs.length < pickedPdfs.length)) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      Android.showToast('❌ فشل رفع ملفات PDF! تم إلغاء النشر بالكامل.');
+      return; 
+    }
+    
+    Android.showToast('جاري حفظ البيانات في السيرفر...');
+
+    // 3. الحفظ النهائي في Supabase
     let editId = document.getElementById('editLessonId').value;
     let sub = document.getElementById('pubSubject').value;
     let timeSlot = document.getElementById('pubTimeSlot').value;
@@ -905,8 +1021,8 @@
       timeSlot: timeSlot,
       title: title,
       desc: desc,
-      images: uploadedUrls, // روابط ImgBB القصيرة فقط
-      pdfs: isEx ? pickedPdfs : [], // الروابط الخارجية للـ PDF فقط
+      images: uploadedUrls, 
+      pdfs: isEx ? uploadedPdfs : [], 
       timestamp: now.getTime(),
       dateKey: dateKey,
       dateStr: dateStr,
